@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Battle Simulator</title>
+    <!-- Google Fonts: Press Start 2P for titoli, Comic Sans per testo -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Modifica colori dettagli e testi: tutto nero, solo sfondo rosso/blu */
+        /* filepath: c:\Users\A864apulia\Desktop\pokemon.html */
+        :root {
+            --red: #e53935;
+            --blue: #3949ab;
+            --yellow: #ffcb05;
+            --white: #fff;
+            --gray: #f5f5f5;
+            --black: #111;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(90deg, var(--red) 0%, var(--blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            color: var(--black);
+        }
+        .container {
+            background: linear-gradient(90deg, #fff4f4 0%, #f4f7ff 100%);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 1000px;
+            overflow: hidden;
+            border: 4px solid var(--black);
+        }
+        header {
+            background: none;
+            color: #2a2a2a;
+            border-bottom: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 32px; /* aggiunto spazio sopra */
+        }
+        h1 {
+            color: #2a2a2a;
+            text-shadow: 2px 2px 0 #FFCB05, 4px 4px 0 #3B4CCA;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-align: center;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .subtitle {
+            color: var(--black);
+            text-shadow: 2px 2px 0 #FFCB05, 4px 4px 0 #3B4CCA;
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            margin-bottom: 18px;
+            text-align: center;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .lang-select {
+            background: none;
+            border-radius: 0;
+            padding: 0;
+            margin-top: 12px;
+            margin-bottom: 18px;
+            box-shadow: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+        }
+        .lang-btn {
+            background: transparent;
+            border: 2px solid var(--black);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 1.1em;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            color: var(--black);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+        .lang-btn.selected {
+            color: #2a2a2a; /* stesso colore di titolo/sottotitolo */
+        }
+        .lang-btn:hover {
+            color: #FFCB05; /* giallo Pokémon in hover */
+        }
+        button {
+            background: var(--white);
+            color: var(--black);
+            border: 2px solid var(--black);
+            box-shadow: 0 2px 8px var(--black)22;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            margin-top: 10px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background: transparent;
+            color: var(--black);
+            transform: scale(1.08);
+        }
+        .content {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        .section {
+            background: #fff8f8;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(59,76,202,0.08);
+            border: 2px solid var(--black);
+        }
+        h2 {
+            color: var(--black);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--black);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        .input-group { margin-bottom: 15px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--black);
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--black);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #fffde7;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            color: var(--black);
+        }
+        input[type="text"]:focus {
+            border-color: var(--black);
+            outline: none;
+        }
+        .pokemon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .pokemon-card {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 3px solid var(--black);
+            box-shadow: 0 2px 8px var(--black)22;
+            color: var(--black);
+        }
+        .pokemon-card:hover {
+            border-color: var(--black);
+        }
+        .pokemon-card.selected {
+            border-color: var(--black);
+            /* Rimuovi lo sfondo giallo */
+            background-color: var(--white);
+            transform: scale(1.08);
+            transition: transform 0.2s;
+        }
+        .pokemon-sprite {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            image-rendering: pixelated;
+        }
+        .pokemon-name {
+            color: var(--black);
+            margin-bottom: 5px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.68rem;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            overflow: visible;
+            white-space: normal;
+            text-overflow: unset;
+            word-break: break-word;
+            padding: 0 5px;
+        }
+        .pokemon-type {
+            font-size: 0.85rem;
+            color: var(--white);
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            font-weight: bold;
+            background: var(--blue);
+        }
+        .battle-log {
+            background-color: #f5f5f5;
+            color: var(--black);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px var(--black)22;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            line-height: 1.5;
+            font-size: 1rem;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .log-entry.attack {
+            color: var(--black);
+        }
+        .log-entry.switch {
+            color: var(--black);
+        }
+        .log-entry.info {
+            color: var(--black);
+        }
+        .team-display {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .team {
+            text-align: center;
+            flex: 1;
+            min-width: 250px;
+        }
+        .team-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--black);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1rem;
+        }
+        .team-pokemon {
+            display: flex;
+            align-items: center;
+            background: var(--white);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px var(--black)22;
+            border: 2px solid var(--black);
+            color: var(--black);
+        }
+        .team-pokemon img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            image-rendering: pixelated;
+        }
+        .team-pokemon-name {
+            font-size: 0.68rem;
+            font-family: 'Press Start 2P', cursive;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+        }
+        .hp-bar {
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .hp-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s, background 0.5s;
+            background: linear-gradient(90deg, #43a047 0%, #ffeb3b 60%, #e53935 100%);
+        }
+        .battle-field {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .battle-pokemon {
+            text-align: center;
+            margin: 10px;
+        }
+        .battle-pokemon img {
+            width: 120px;
+            height: 120px;
+            image-rendering: pixelated;
+        }
+        .battle-pokemon-name {
+            font-size: 0.8rem;
+            font-family: 'Press Start 2P', cursive;
+            margin: 5px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+        .vs {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--black);
+            margin: 0 20px;
+            font-family: 'Press Start 2P', cursive;
+            text-shadow: 2px 2px 0 var(--white);
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 2px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+        }
+        .type-fuoco { background-color: #e53935; }
+        .type-acqua { background-color: #3949ab; }
+        .type-erba { background-color: #43a047; }
+        .type-psico { background-color: #d81b60; }
+        .type-ghiaccio { background-color: #00bcd4; }
+        .type-normale { background-color: #bdbdbd; color: #222; }
+        .type-elettro { background-color: #ffeb3b; color: #222; }
+        .type-veleno { background-color: #9c27b0; }
+        .type-terra { background-color: #8d6e63; }
+        .type-volante { background-color: #90caf9; color: #222; }
+        .type-lotta { background-color: #f44336; }
+        .type-roccia { background-color: #795548; }
+        .type-coleottero { background-color: #4caf50; }
+        .type-spettro { background-color: #673ab7; }
+        .type-drago { background-color: #3f51b5; }
+        .type-buio { background-color: #424242; }
+        .type-acciaio { background-color: #9e9e9e; color: #222; }
+        .type-folletto { background-color: #e91e63; }
+        #fullscreen-message {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, var(--red) 0%, var(--blue) 100%);
+            color: var(--black);
+            text-shadow: 2px 2px 0 var(--white);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.8rem; /* Ridotto da 2.2rem */
+            letter-spacing: 2px;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 0 20px;
+            animation: fadeIn 0.7s;
+        }
+        #fullscreen-message .subtitle {
+            color: var(--black);
+            font-size: 1rem; /* Ridotto da 1.1rem */
+            margin-top: 24px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @media (max-width: 768px) {
+            .pokemon-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            .battle-field {
+                flex-direction: column;
+            }
+            .vs {
+                margin: 10px 0;
+            }
+            #fullscreen-message {
+                font-size: 1.2rem;
+                padding: 0 5vw;
+            }
+            .pokemon-name {
+                font-size: 0.6rem;
+                height: 28px;
+            }
+            .team-pokemon-name {
+                font-size: 0.6rem;
+                max-width: 80px;
+            }
+            .battle-pokemon-name {
+                font-size: 0.7rem;
+                max-width: 120px;
+            }
+        }
+
+        /* Nuovi stili suggeriti */
+        /* Lo sfondo resta rosso/blu */
+        body {
+            background: linear-gradient(90deg, var(--red) 0%, var(--blue) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+            color: var(--black);
+        }
+
+        /* Titolo, sottotitolo e selezione lingua: colori originali Pokémon */
+        header {
+            background: none;
+            color: #2a2a2a;
+            border-bottom: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 32px; /* aggiunto spazio sopra */
+        }
+        h1 {
+            color: #2a2a2a;
+            text-shadow: 2px 2px 0 #FFCB05, 4px 4px 0 #3B4CCA;
+            text-align: center;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .subtitle {
+            color: var(--black);
+            text-shadow: 2px 2px 0 #FFCB05, 4px 4px 0 #3B4CCA;
+            text-align: center;
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .lang-select {
+            background: none;
+            border-radius: 0;
+            padding: 0;
+            margin-top: 12px;
+            margin-bottom: 18px;
+            box-shadow: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+        }
+
+        /* Tutti gli altri dettagli, testi e bordi neri */
+        .container, .section, .lang-btn, button, .pokemon-card, .team-pokemon, h2, label, input[type="text"], .battle-log, .vs, .team-title {
+            border-color: var(--black) !important;
+            color: var(--black) !important;
+        }
+
+        /* Barre della vita: colore dinamico in base alla percentuale */
+.hp-bar {
+    height: 10px;
+    background-color: #ddd;
+    border-radius: 5px;
+    margin-top: 5px;
+    overflow: hidden;
+    width: 100%;
+}
+.hp-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.5s, background 0.5s;
+    background: linear-gradient(90deg, #43a047 0%, #ffeb3b 60%, #e53935 100%);
+}
+
+/* Testo dei turno: sfondo trasparente blu o rosso */
+.log-entry.turn-player {
+    background: rgba(57, 73, 171, 0.18); /* blu trasparente */
+    color: var(--black);
+    font-weight: bold;
+    border-radius: 6px;
+}
+.log-entry.turn-opponent {
+    background: rgba(229, 57, 53, 0.18); /* rosso trasparente */
+    color: var(--black);
+    font-weight: bold;
+    border-radius: 6px;
+}
+    </style>
+</head>
+<body>
+    <div id="fullscreen-message"></div>
+    <div class="container">
+        <header>
+            <h1>POKéMON BATTLE</h1>
+            <div class="subtitle" id="subtitle">Affronta il tuo avversario in una battaglia epica!</div>
+            <div class="lang-select">
+                <button class="lang-btn selected" id="lang-it"><img src="https://flagcdn.com/24x18/it.png" alt="IT"> Italiano</button>
+                <button class="lang-btn" id="lang-en"><img src="https://flagcdn.com/24x18/gb.png" alt="EN"> English</button>
+            </div>
+        </header>
+        <div class="content">
+            <div class="section">
+                <h2 id="start-title">Inizia la Battaglia</h2>
+                <div class="input-group">
+                    <label for="player-name" id="label-name">Inserisci il tuo nome:</label>
+                    <input type="text" id="player-name" placeholder="Inserisci il tuo nome">
+                </div>
+                <button id="start-btn">Inizia la Battaglia</button>
+            </div>
+            <div class="section" id="pokemon-selection" style="display: none;">
+                <h2 id="choose-title">Scegli i tuoi Pokémon</h2>
+                <p id="choose-desc">Scegli 3 Pokémon dalla lista qui sotto:</p>
+                <div class="pokemon-grid" id="pokemon-list"></div>
+                <button id="confirm-team" disabled>Conferma Squadra</button>
+            </div>
+            <div class="section" id="battle-section" style="display: none;">
+                <h2 id="battle-title">Battaglia in Corso</h2>
+                <div class="battle-field">
+                    <div class="battle-pokemon" id="player-pokemon"></div>
+                    <div class="vs" id="vs-label">VS</div>
+                    <div class="battle-pokemon" id="opponent-pokemon"></div>
+                </div>
+                <div class="battle-log" id="battle-log">
+                    Il log della battaglia apparirà qui...
+                </div>
+                <button id="next-turn">Prossimo Turno</button>
+            </div>
+            <div class="section" id="teams-section" style="display: none;">
+                <h2 id="teams-title">Squadre</h2>
+                <div class="team-display">
+                    <div class="team">
+                        <div class="team-title" id="player-team-title">La Tua Squadra</div>
+                        <div id="player-team"></div>
+                    </div>
+                    <div class="team">
+                        <div class="team-title" id="opponent-team-title">Squadra Avversaria</div>
+                        <div id="opponent-team"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="result-section" style="display: none;">
+                <h2 id="result-title">Risultato Battaglia</h2>
+                <div id="battle-result"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Modifica traduzioni e placeholder
+const translations = {
+    it: {
+        subtitle: "Affronta il tuo avversario in una battaglia epica!",
+        startTitle: "Inizia la Battaglia",
+        labelName: "Inserisci il tuo nome:",
+        inputPlaceholder: "Inserisci il tuo nome",
+        startBtn: "Inizia la Battaglia",
+        chooseTitle: "Scegli i tuoi Pokémon",
+        chooseDesc: "Scegli 3 Pokémon dalla lista qui sotto:",
+        confirmTeam: "Conferma Squadra",
+        battleTitle: "Battaglia in Corso",
+        vs: "VS",
+        teamsTitle: "Squadre",
+        playerTeam: "La Tua Squadra",
+        opponentTeam: "Squadra Avversaria",
+        resultTitle: "Risultato Battaglia",
+        logStart: (nome, avv) => `Inizia la battaglia tra la squadra di ${nome} e ${avv}!<br>`,
+        logTurn: n => `=== TURNO ${n} ===`,
+        logField: (mio, suo) => `In campo: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
+        logAttack: (att, def, danno) => `${att.Nome} attacca ${def.Nome} e infligge ${danno} danni!<br>${def.Nome} ha ora ${def.Vita} HP<br>`,
+        logSwitch: nome => `${nome} è esausto!`,
+        logEnter: nome => `Entra in campo ${nome}!`,
+        win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULAZIONI!</span><br>
+            <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} hai vinto la battaglia!</span>
+            <div class="subtitle" style="color:#fff;">Premi F5 for giocare ancora!</div>`,
+        lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">PECCATO!</span><br>
+            <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} vince la battaglia!</span>
+            <div class="subtitle" style="color:#fff;">Premi F5 per riprovare!</div>`,
+        inputNameAlert: "Per favore inserisci il tuo nome!",
+        select3: "Hai già selezionato 3 Pokémon!"
+    },
+    en: {
+        subtitle: "Face your opponent in an epic battle!",
+        startTitle: "Start Battle",
+        labelName: "Enter your name:",
+        inputPlaceholder: "Enter your name",
+        startBtn: "Start Battle",
+        chooseTitle: "Choose your Pokémon",
+        chooseDesc: "Pick 3 Pokémon from the list below:",
+        confirmTeam: "Confirm Team",
+        battleTitle: "Battle in Progress",
+        vs: "VS",
+        teamsTitle: "Teams",
+        playerTeam: "Your Team",
+        opponentTeam: "Opponent Team",
+        resultTitle: "Battle Result",
+        logStart: (nome, avv) => `The battle between ${nome}'s team and ${avv} begins!<br>`,
+        logTurn: n => `=== TURN ${n} ===`,
+        logField: (mio, suo) => `On the field: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
+        logAttack: (att, def, danno) => `${att.Nome} attacks ${def.Nome} and deals ${danno} damage!<br>${def.Nome} now has ${def.Vita} HP<br>`,
+        logSwitch: nome => `${nome} has fainted!`,
+        logEnter: nome => `${nome} enters the field!`,
+        win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULATIONS!</span><br>
+            <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} won the battle!</span>
+            <div class="subtitle" style="color:#fff;">Press F5 to play again!</div>`,
+        lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">TOO BAD!</span><br>
+            <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} wins the battle!</span>
+            <div class="subtitle" style="color:#fff;">Press F5 to try again!</div>`,
+        inputNameAlert: "Please enter your name!",
+        select3: "You have already selected 3 Pokémon!"
+    }
+};
+let lang = "it";
+function setLang(l) {
+    lang = l;
+    document.getElementById('lang-it').classList.toggle('selected', l === "it");
+    document.getElementById('lang-en').classList.toggle('selected', l === "en");
+    document.getElementById('subtitle').textContent = translations[l].subtitle;
+    document.getElementById('start-title').textContent = translations[l].startTitle;
+    document.getElementById('label-name').textContent = translations[l].labelName;
+    document.getElementById('player-name').placeholder = translations[l].inputPlaceholder;
+    document.getElementById('start-btn').textContent = translations[l].startBtn;
+    document.getElementById('choose-title').textContent = translations[l].chooseTitle;
+    document.getElementById('choose-desc').textContent = translations[l].chooseDesc;
+    document.getElementById('confirm-team').textContent = translations[l].confirmTeam;
+    document.getElementById('battle-title').textContent = translations[l].battleTitle;
+    document.getElementById('vs-label').textContent = translations[l].vs;
+    document.getElementById('teams-title').textContent = translations[l].teamsTitle;
+    document.getElementById('player-team-title').textContent = translations[l].playerTeam;
+    document.getElementById('opponent-team-title').textContent = translations[l].opponentTeam;
+    document.getElementById('result-title').textContent = translations[l].resultTitle;
+    document.getElementById('battle-log').textContent = l === "it" ? "Il log della battaglia apparirà qui..." : "The battle log will appear here...";
+
+    // Aggiorna i badge dei tipi nella lista dei Pokémon
+    document.querySelectorAll('.pokemon-card').forEach(card => {
+        const idx = card.dataset.index;
+        const pokemon = TuttiIPokemon[idx];
+        let typeBadges = "";
+        const types = pokemon.Tipo.split('/');
+        types.forEach(type => {
+            const typeClass = `type-${type.toLowerCase()}`;
+            typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+        });
+        card.querySelector('div:last-child').innerHTML = typeBadges;
+    });
+
+    updateTeamDisplay();
+    updateBattleField();
+}
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('lang-it').onclick = () => setLang('it');
+    document.getElementById('lang-en').onclick = () => setLang('en');
+    setLang('it');
+});
+
+        // Classi base e derivate
+        class Pokemon {
+            constructor(nome, vita, attacco, tipo = "Normale") {
+                this.Nome = nome;
+                this.Vita = vita;
+                this.AttaccoBase = attacco;
+                this.Tipo = tipo;
+                this.VitaMax = vita;
+            }
+
+            attacca(avversario) {
+                const danno = this.calcolaDanno(avversario);
+                avversario.Vita -= danno;
+                if (avversario.Vita < 0) avversario.Vita = 0;
+
+                return `${this.Nome} attacca ${avversario.Nome} e infligge ${danno} danni!<br>${avversario.Nome} ha ora ${avversario.Vita} HP<br>`;
+            }
+
+            calcolaDanno(avversario) {
+                let danno = this.AttaccoBase;
+                danno += Math.floor(Math.random() * 12) - 5;
+
+                let moltiplicatore = 1.0;
+                switch (this.Tipo) {
+                    case "Fuoco":
+                        if (avversario.Tipo === "Erba") moltiplicatore = 1.5;
+                        if (avversario.Tipo === "Acqua") moltiplicatore = 0.5;
+                        break;
+                    case "Acqua":
+                        if (avversario.Tipo === "Fuoco") moltiplicatore = 1.5;
+                        if (avversario.Tipo === "Erba") moltiplicatore = 0.5;
+                        break;
+                    case "Erba":
+                        if (avversario.Tipo === "Acqua") moltiplicatore = 1.5;
+                        if (avversario.Tipo === "Fuoco") moltiplicatore = 0.5;
+                        break;
+                    case "Elettro":
+                        if (avversario.Tipo === "Acqua") moltiplicatore = 1.5;
+                        if (avversario.Tipo === "Erba") moltiplicatore = 0.5;
+                        break;
+                    case "Ghiaccio":
+                        if (avversario.Tipo === "Erba") moltiplicatore = 1.5;
+                        if (avversario.Tipo === "Fuoco") moltiplicatore = 0.5;
+                        break;
+                }
+
+                return Math.floor(danno * moltiplicatore);
+            }
+
+            eVivo() {
+                return this.Vita > 0;
+            }
+        }
+
+        class Fuoco extends Pokemon {
+            constructor(nome, vita = 100, attacco = 20) {
+                super(nome, vita, attacco, "Fuoco");
+            }
+        }
+
+        class Acqua extends Pokemon {
+            constructor(nome, vita = 100, attacco = 20) {
+                super(nome, vita, attacco, "Acqua");
+            }
+        }
+
+        class Erba extends Pokemon {
+            constructor(nome, vita = 100, attacco = 20) {
+                super(nome, vita, attacco, "Erba");
+            }
+        }
+
+        class Psico extends Pokemon {
+            constructor(nome, vita = 90, attacco = 21) {
+                super(nome, vita, attacco, "Psico");
+            }
+        }
+
+        class Ghiaccio extends Pokemon {
+            constructor(nome, vita = 95, attacco = 18) {
+                super(nome, vita, attacco, "Ghiaccio");
+            }
+        }
+
+        class Normale extends Pokemon {
+            constructor(nome, vita = 100, attacco = 17) {
+                super(nome, vita, attacco, "Normale");
+            }
+        }
+
+        class Elettro extends Pokemon {
+            constructor(nome, vita = 90, attacco = 20) {
+                super(nome, vita, attacco, "Elettro");
+            }
+        }
+
+        // Lista dei 151 Pokémon di 1° gen con tipi fedeli all'originale
+        const TuttiIPokemon = [
+            new Pokemon("Bulbasaur", 45, 49, "Erba/Veleno"),
+            new Pokemon("Ivysaur", 60, 62, "Erba/Veleno"),
+            new Pokemon("Venusaur", 80, 82, "Erba/Veleno"),
+            new Pokemon("Charmander", 39, 52, "Fuoco"),
+            new Pokemon("Charmeleon", 58, 64, "Fuoco"),
+            new Pokemon("Charizard", 78, 84, "Fuoco/Volante"),
+            new Pokemon("Squirtle", 44, 48, "Acqua"),
+            new Pokemon("Wartortle", 59, 63, "Acqua"),
+            new Pokemon("Blastoise", 79, 83, "Acqua"),
+            new Pokemon("Caterpie", 45, 30, "Coleottero"),
+            new Pokemon("Metapod", 50, 20, "Coleottero"),
+            new Pokemon("Butterfree", 60, 45, "Coleottero/Volante"),
+            new Pokemon("Weedle", 40, 35, "Coleottero/Veleno"),
+            new Pokemon("Kakuna", 45, 25, "Coleottero/Veleno"),
+            new Pokemon("Beedrill", 65, 90, "Coleottero/Veleno"),
+            new Pokemon("Pidgey", 40, 45, "Normale/Volante"),
+            new Pokemon("Pidgeotto", 63, 60, "Normale/Volante"),
+            new Pokemon("Pidgeot", 83, 80, "Normale/Volante"),
+            new Pokemon("Rattata", 30, 56, "Normale"),
+            new Pokemon("Raticate", 55, 81, "Normale"),
+            new Pokemon("Spearow", 40, 60, "Normale/Volante"),
+            new Pokemon("Fearow", 65, 90, "Normale/Volante"),
+            new Pokemon("Ekans", 35, 60, "Veleno"),
+            new Pokemon("Arbok", 60, 85, "Veleno"),
+            new Pokemon("Pikachu", 35, 55, "Elettro"),
+            new Pokemon("Raichu", 60, 90, "Elettro"),
+            new Pokemon("Sandshrew", 50, 75, "Terra"),
+            new Pokemon("Sandslash", 75, 100, "Terra"),
+            new Pokemon("Nidoran♀", 55, 47, "Veleno"),
+            new Pokemon("Nidorina", 70, 62, "Veleno"),
+            new Pokemon("Nidoqueen", 90, 92, "Veleno/Terra"),
+            new Pokemon("Nidoran♂", 46, 57, "Veleno"),
+            new Pokemon("Nidorino", 61, 72, "Veleno"),
+            new Pokemon("Nidoking", 81, 102, "Veleno/Terra"),
+            new Pokemon("Clefairy", 70, 45, "Folletto"),
+            new Pokemon("Clefable", 95, 70, "Folletto"),
+            new Pokemon("Vulpix", 38, 41, "Fuoco"),
+            new Pokemon("Ninetales", 73, 76, "Fuoco"),
+            new Pokemon("Jigglypuff", 115, 45, "Normale/Folletto"),
+            new Pokemon("Wigglytuff", 140, 70, "Normale/Folletto"),
+            new Pokemon("Zubat", 40, 45, "Veleno/Volante"),
+            new Pokemon("Golbat", 75, 80, "Veleno/Volante"),
+            new Pokemon("Oddish", 45, 50, "Erba/Veleno"),
+            new Pokemon("Gloom", 60, 65, "Erba/Veleno"),
+            new Pokemon("Vileplume", 75, 80, "Erba/Veleno"),
+            new Pokemon("Paras", 35, 70, "Coleottero/Erba"),
+            new Pokemon("Parasect", 60, 95, "Coleottero/Erba"),
+            new Pokemon("Venonat", 60, 55, "Coleottero/Veleno"),
+            new Pokemon("Venomoth", 70, 65, "Coleottero/Veleno"),
+            new Pokemon("Diglett", 10, 55, "Terra"),
+            new Pokemon("Dugtrio", 35, 80, "Terra"),
+            new Pokemon("Meowth", 40, 45, "Normale"),
+            new Pokemon("Persian", 65, 70, "Normale"),
+            new Pokemon("Psyduck", 50, 52, "Acqua"),
+            new Pokemon("Golduck", 80, 82, "Acqua"),
+            new Pokemon("Mankey", 40, 80, "Lotta"),
+            new Pokemon("Primeape", 65, 105, "Lotta"),
+            new Pokemon("Growlithe", 55, 70, "Fuoco"),
+            new Pokemon("Arcanine", 90, 110, "Fuoco"),
+            new Pokemon("Poliwag", 40, 50, "Acqua"),
+            new Pokemon("Poliwhirl", 65, 65, "Acqua"),
+            new Pokemon("Poliwrath", 90, 85, "Acqua/Lotta"),
+            new Pokemon("Abra", 25, 20, "Psico"),
+            new Pokemon("Kadabra", 40, 35, "Psico"),
+            new Pokemon("Alakazam", 55, 50, "Psico"),
+            new Pokemon("Machop", 70, 80, "Lotta"),
+            new Pokemon("Machoke", 80, 100, "Lotta"),
+            new Pokemon("Machamp", 90, 130, "Lotta"),
+            new Pokemon("Bellsprout", 50, 75, "Erba/Veleno"),
+            new Pokemon("Weepinbell", 65, 90, "Erba/Veleno"),
+            new Pokemon("Victreebel", 80, 105, "Erba/Veleno"),
+            new Pokemon("Tentacool", 40, 40, "Acqua/Veleno"),
+            new Pokemon("Tentacruel", 80, 70, "Acqua/Veleno"),
+            new Pokemon("Geodude", 40, 80, "Roccia/Terra"),
+            new Pokemon("Graveler", 55, 95, "Roccia/Terra"),
+            new Pokemon("Golem", 80, 110, "Roccia/Terra"),
+            new Pokemon("Ponyta", 50, 85, "Fuoco"),
+            new Pokemon("Rapidash", 65, 100, "Fuoco"),
+            new Pokemon("Slowpoke", 90, 65, "Acqua/Psico"),
+            new Pokemon("Slowbro", 95, 75, "Acqua/Psico"),
+            new Pokemon("Magnemite", 25, 35, "Elettro/Acciaio"),
+            new Pokemon("Magneton", 50, 60, "Elettro/Acciaio"),
+            new Pokemon("Farfetch'd", 52, 65, "Normale/Volante"),
+            new Pokemon("Doduo", 35, 85, "Normale/Volante"),
+            new Pokemon("Dodrio", 60, 110, "Normale/Volante"),
+            new Pokemon("Seel", 65, 45, "Acqua"),
+            new Pokemon("Dewgong", 90, 70, "Acqua/Ghiaccio"),
+            new Pokemon("Grimer", 80, 80, "Veleno"),
+            new Pokemon("Muk", 105, 105, "Veleno"),
+            new Pokemon("Shellder", 30, 65, "Acqua"),
+            new Pokemon("Cloyster", 50, 95, "Acqua/Ghiaccio"),
+            new Pokemon("Gastly", 30, 35, "Spettro/Veleno"),
+            new Pokemon("Haunter", 45, 50, "Spettro/Veleno"),
+            new Pokemon("Gengar", 60, 65, "Spettro/Veleno"),
+            new Pokemon("Onix", 35, 45, "Roccia/Terra"),
+            new Pokemon("Drowzee", 60, 48, "Psico"),
+            new Pokemon("Hypno", 85, 73, "Psico"),
+            new Pokemon("Krabby", 30, 105, "Acqua"),
+            new Pokemon("Kingler", 55, 130, "Acqua"),
+            new Pokemon("Voltorb", 40, 30, "Elettro"),
+            new Pokemon("Electrode", 60, 50, "Elettro"),
+            new Pokemon("Exeggcute", 60, 40, "Erba/Psico"),
+            new Pokemon("Exeggutor", 95, 95, "Erba/Psico"),
+            new Pokemon("Cubone", 50, 50, "Terra"),
+            new Pokemon("Marowak", 60, 80, "Terra"),
+            new Pokemon("Hitmonlee", 50, 120, "Lotta"),
+            new Pokemon("Hitmonchan", 50, 105, "Lotta"),
+            new Pokemon("Lickitung", 90, 55, "Normale"),
+            new Pokemon("Koffing", 40, 65, "Veleno"),
+            new Pokemon("Weezing", 65, 90, "Veleno"),
+            new Pokemon("Rhyhorn", 80, 85, "Terra/Roccia"),
+            new Pokemon("Rhydon", 105, 130, "Terra/Roccia"),
+            new Pokemon("Chansey", 250, 5, "Normale"),
+            new Pokemon("Tangela", 65, 55, "Erba"),
+            new Pokemon("Kangaskhan", 105, 95, "Normale"),
+            new Pokemon("Horsea", 30, 40, "Acqua"),
+            new Pokemon("Seadra", 55, 65, "Acqua"),
+            new Pokemon("Goldeen", 45, 67, "Acqua"),
+            new Pokemon("Seaking", 80, 92, "Acqua"),
+            new Pokemon("Staryu", 30, 45, "Acqua"),
+            new Pokemon("Starmie", 60, 75, "Acqua/Psico"),
+            new Pokemon("Mr. Mime", 40, 45, "Psico/Folletto"),
+            new Pokemon("Scyther", 70, 110, "Coleottero/Volante"),
+            new Pokemon("Jynx", 65, 50, "Ghiaccio/Psico"),
+            new Pokemon("Electabuzz", 65, 83, "Elettro"),
+            new Pokemon("Magmar", 65, 95, "Fuoco"),
+            new Pokemon("Pinsir", 65, 125, "Coleottero"),
+            new Pokemon("Tauros", 75, 100, "Normale"),
+            new Pokemon("Magikarp", 20, 10, "Acqua"),
+            new Pokemon("Gyarados", 95, 125, "Acqua/Volante"),
+            new Pokemon("Lapras", 130, 85, "Acqua/Ghiaccio"),
+            new Pokemon("Ditto", 48, 48, "Normale"),
+            new Pokemon("Eevee", 55, 55, "Normale"),
+            new Pokemon("Vaporeon", 130, 65, "Acqua"),
+            new Pokemon("Jolteon", 65, 65, "Elettro"),
+            new Pokemon("Flareon", 65, 130, "Fuoco"),
+            new Pokemon("Porygon", 65, 60, "Normale"),
+            new Pokemon("Omanyte", 35, 40, "Roccia/Acqua"),
+            new Pokemon("Omastar", 70, 60, "Roccia/Acqua"),
+            new Pokemon("Kabuto", 30, 80, "Roccia/Acqua"),
+            new Pokemon("Kabutops", 60, 115, "Roccia/Acqua"),
+            new Pokemon("Aerodactyl", 80, 105, "Roccia/Volante"),
+            new Pokemon("Snorlax", 160, 110, "Normale"),
+            new Pokemon("Articuno", 90, 85, "Ghiaccio/Volante"),
+            new Pokemon("Zapdos", 90, 90, "Elettro/Volante"),
+            new Pokemon("Moltres", 90, 100, "Fuoco/Volante"),
+            new Pokemon("Dratini", 41, 64, "Drago"),
+            new Pokemon("Dragonair", 61, 84, "Drago"),
+            new Pokemon("Dragonite", 91, 134, "Drago/Volante"),
+            new Pokemon("Mewtwo", 106, 110, "Psico"),
+            new Pokemon("Mew", 100, 100, "Psico")
+        ];
+
+        // Dizionario tipi ITA -> ENG
+const typeTranslations = {
+    "Fuoco": "Fire",
+    "Acqua": "Water",
+    "Erba": "Grass",
+    "Veleno": "Poison",
+    "Normale": "Normal",
+    "Volante": "Flying",
+    "Coleottero": "Bug",
+    "Psico": "Psychic",
+    "Ghiaccio": "Ice",
+    "Elettro": "Electric",
+    "Lotta": "Fighting",
+    "Roccia": "Rock",
+    "Spettro": "Ghost",
+    "Drago": "Dragon",
+    "Buio": "Dark",
+    "Acciaio": "Steel",
+    "Folletto": "Fairy",
+    "Terra": "Ground"
+};
+
+// Funzione per tradurre i tipi
+function translateType(type, lang) {
+    if (lang === "en") {
+        return typeTranslations[type] || type;
+    }
+    return type;
+}
+
+// Variabili globali
+        let nomeGiocatore = "";
+        let nomeAvversario = "";
+        let squadraGiocatore = [];
+        let squadraAvversario = [];
+        let turno = 1;
+        let idxGiocatore = 0;
+        let idxAvversario = 0;
+
+        // Funzione per ottenere l'URL dello sprite di un Pokémon
+        function getPokemonSpriteUrl(pokemonName) {
+            // Mappa per i nomi che non corrispondono esattamente
+            const nameMap = {
+                "Nidoran♀": "nidoran-f",
+                "Nidoran♂": "nidoran-m",
+                "Farfetch'd": "farfetchd",
+                "Mr. Mime": "mr-mime"
+            };
+            
+            const formattedName = nameMap[pokemonName] || 
+                                pokemonName.toLowerCase().replace(/\s+/g, '-');
+            return `https://img.pokemondb.net/sprites/red-blue/normal/${formattedName}.png`;
+        }
+
+        // Funzione per creare una nuova istanza di Pokémon (clone)
+        function creaPokemon(p) {
+            return new Pokemon(p.Nome, p.Vita, p.AttaccoBase, p.Tipo);
+        }
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            // Popola la lista dei Pokémon
+            const pokemonList = document.getElementById('pokemon-list');
+            TuttiIPokemon.forEach((pokemon, index) => {
+                const card = document.createElement('div');
+                card.className = 'pokemon-card';
+                card.dataset.index = index;
+                
+                const spriteUrl = getPokemonSpriteUrl(pokemon.Nome);
+                
+                // Crea i badge per i tipi (gestisce Pokémon con più tipi)
+                let typeBadges = "";
+                const types = pokemon.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+                
+                card.innerHTML = `
+                    <img src="${spriteUrl}" alt="${pokemon.Nome}" class="pokemon-sprite" onerror="this.src='https://via.placeholder.com/80x80/cccccc/666666?text=?'">
+                    <div class="pokemon-name">${pokemon.Nome}</div>
+                    <div>${typeBadges}</div>
+                `;
+                
+                card.addEventListener('click', () => selectPokemon(card, pokemon));
+                pokemonList.appendChild(card);
+            });
+
+            // Gestore per il pulsante di inizio
+            document.getElementById('start-btn').addEventListener('click', startBattle);
+
+            // Gestore per le pulsante di conferma squadra
+            document.getElementById('confirm-team').addEventListener('click', confirmTeam);
+
+            // Gestore for il pulsante del prossimo turno
+            document.getElementById('next-turn').addEventListener('click', nextTurn);
+        });
+
+        // Funzione per selezionare un Pokémon
+        function selectPokemon(card, pokemon) {
+            if (squadraGiocatore.length >= 3 && !card.classList.contains('selected')) {
+                alert(translations[lang].select3);
+                return;
+            }
+
+            card.classList.toggle('selected');
+            
+            if (card.classList.contains('selected')) {
+                squadraGiocatore.push(pokemon);
+            } else {
+                const index = squadraGiocatore.findIndex(p => p.Nome === pokemon.Nome);
+                if (index !== -1) {
+                    squadraGiocatore.splice(index, 1);
+                }
+            }
+            
+            document.getElementById('confirm-team').disabled = squadraGiocatore.length !== 3;
+        }
+
+        // Funzione per iniziare la battaglia
+        function startBattle() {
+            squadraGiocatore = [];
+            nomeGiocatore = document.getElementById('player-name').value.trim();
+            
+            if (!nomeGiocatore) {
+                alert(translations[lang].inputNameAlert);
+                return;
+            }
+            
+            nomeAvversario = "Avversario";
+            
+            document.getElementById('player-name').disabled = true;
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('pokemon-selection').style.display = 'block';
+        }
+
+        // Funzione per confermare la squadra
+        function confirmTeam() {
+            // Crea copie dei Pokémon selezionati
+            squadraGiocatore = squadraGiocatore.map(p => creaPokemon(p));
+            
+            // Avversario: 3 Pokémon random (no duplicati, no stessi del giocatore)
+            const poolAvversario = TuttiIPokemon
+                .filter(p => !squadraGiocatore.some(pg => pg.Nome === p.Nome));
+            
+            squadraAvversario = [];
+            while (squadraAvversario.length < 3) {
+                const idx = Math.floor(Math.random() * poolAvversario.length);
+                const p = poolAvversario[idx];
+                squadraAvversario.push(creaPokemon(p));
+                poolAvversario.splice(idx, 1);
+            }
+            
+            // Aggiorna l'interfaccia con le squadre
+            updateTeamDisplay();
+            
+            document.getElementById('pokemon-selection').style.display = 'none';
+            document.getElementById('battle-section').style.display = 'block';
+            document.getElementById('teams-section').style.display = 'block';
+            
+            // Inizia la battaglia
+            turno = 1;
+            idxGiocatore = 0;
+            idxAvversario = 0;
+            updateBattleField();
+            document.getElementById('battle-log').innerHTML = 
+                translations[lang].logStart(nomeGiocatore, nomeAvversario);
+            document.getElementById('next-turn').disabled = false;
+            document.getElementById('result-section').style.display = 'none';
+            document.getElementById('fullscreen-message').style.display = 'none';
+        }
+
+        // Funzione per aggiornare il display delle squadre
+        function updateTeamDisplay() {
+            const playerTeam = document.getElementById('player-team');
+            const opponentTeam = document.getElementById('opponent-team');
+            
+            playerTeam.innerHTML = '';
+            opponentTeam.innerHTML = '';
+            
+            document.getElementById('player-team-title').textContent = `Squadra di ${nomeGiocatore}`;
+            document.getElementById('opponent-team-title').textContent = `Squadra di ${nomeAvversario}`;
+            
+            squadraGiocatore.forEach(pokemon => {
+                const spriteUrl = getPokemonSpriteUrl(pokemon.Nome);
+                const hpPercent = (pokemon.Vita / pokemon.VitaMax) * 100;
+                
+                // Crea i badge per i tipi (gestisce Pokémon con più tipi)
+                let typeBadges = "";
+                const types = pokemon.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+                
+                const element = document.createElement('div');
+                element.className = 'team-pokemon';
+                element.innerHTML = `
+                    <img src="${spriteUrl}" alt="${pokemon.Nome}" onerror="this.src='https://via.placeholder.com/50x50/cccccc/666666?text=?'">
+                    <div>
+                        <div class="team-pokemon-name">${pokemon.Nome} ${typeBadges}</div>
+                        <div>HP: ${pokemon.Vita}/${pokemon.VitaMax}</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill" style="width: ${hpPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+                playerTeam.appendChild(element);
+            });
+            
+            squadraAvversario.forEach(pokemon => {
+                const spriteUrl = getPokemonSpriteUrl(pokemon.Nome);
+                const hpPercent = (pokemon.Vita / pokemon.VitaMax) * 100;
+                
+                // Crea i badge per i tipi (gestisce Pokémon con più tipi)
+                let typeBadges = "";
+                const types = pokemon.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+                
+                const element = document.createElement('div');
+                element.className = 'team-pokemon';
+                element.innerHTML = `
+                    <img src="${spriteUrl}" alt="${pokemon.Nome}" onerror="this.src='https://via.placeholder.com/50x50/cccccc/666666?text=?'">
+                    <div>
+                        <div class="team-pokemon-name">${pokemon.Nome} ${typeBadges}</div>
+                        <div>HP: ${pokemon.Vita}/${pokemon.VitaMax}</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill" style="width: ${hpPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+                opponentTeam.appendChild(element);
+            });
+        }
+
+        // Funzione per aggiornare il campo di battaglia
+        function updateBattleField() {
+            const playerPokemon = document.getElementById('player-pokemon');
+            const opponentPokemon = document.getElementById('opponent-pokemon');
+
+            if (idxGiocatore < 3) {
+                const p = squadraGiocatore[idxGiocatore];
+                const spriteUrl = getPokemonSpriteUrl(p.Nome);
+                const hpPercent = Math.max(0, Math.round((p.Vita / p.VitaMax) * 100));
+                let hpColor;
+                if (hpPercent > 60) hpColor = '#43a047'; // verde
+                else if (hpPercent > 30) hpColor = '#ffeb3b'; // giallo
+                else hpColor = '#e53935'; // rosso
+                
+                // Crea i badge per i tipi (gestisce Pokémon con più tipi)
+                let typeBadges = "";
+                const types = p.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+
+                playerPokemon.innerHTML = `
+                    <img src="${spriteUrl}" alt="${p.Nome}" onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=?'">
+                    <div class="battle-pokemon-name">${p.Nome} ${typeBadges}</div>
+                    <div>HP: ${p.Vita}/${p.VitaMax}</div>
+                    <div class="hp-bar">
+                        <div class="hp-fill" style="width: ${hpPercent}%; background: ${hpColor};"></div>
+                    </div>
+                `;
+            }
+            
+            if (idxAvversario < 3) {
+                const p = squadraAvversario[idxAvversario];
+                const spriteUrl = getPokemonSpriteUrl(p.Nome);
+                const hpPercent = Math.max(0, Math.round((p.Vita / p.VitaMax) * 100));
+                let hpColor;
+                if (hpPercent > 60) hpColor = '#43a047';
+                else if (hpPercent > 30) hpColor = '#ffeb3b';
+                else hpColor = '#e53935';
+                
+                // Crea i badge per i tipi (gestisce Pokémon con più tipi)
+                let typeBadges = "";
+                const types = p.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+
+                opponentPokemon.innerHTML = `
+                    <img src="${spriteUrl}" alt="${p.Nome}" onerror="this.src='https://via.placeholder.com/120x120/cccccc/666666?text=?'">
+                    <div class="battle-pokemon-name">${p.Nome} ${typeBadges}</div>
+                    <div>HP: ${p.Vita}/${p.VitaMax}</div>
+                    <div class="hp-bar">
+                        <div class="hp-fill" style="width: ${hpPercent}%; background: ${hpColor};"></div>
+                    </div>
+                `;
+            }
+        }
+
+        // Funzione per eseguire il prossimo turno
+        function nextTurn() {
+            if (idxGiocatore >= 3 || idxAvversario >= 3) {
+                endBattle();
+                return;
+            }
+            
+            const mio = squadraGiocatore[idxGiocatore];
+            const suo = squadraAvversario[idxAvversario];
+            
+            let log = `<div class="log-entry turn-player">${translations[lang].logTurn(turno)}</div>`;
+            log += `<div class="log-entry info">${translations[lang].logField(mio, suo)}</div>`;
+            
+            // Attacco del giocatore
+            log += `<div class="log-entry attack">${translations[lang].logAttack(mio, suo, mio.attacca(suo))}</div>`;
+            
+            if (!suo.eVivo()) {
+                log += `<div class="log-entry switch">${translations[lang].logSwitch(suo.Nome)}</div>`;
+                idxAvversario++;
+                if (idxAvversario < 3) {
+                    log += `<div class="log-entry switch">${translations[lang].logEnter(squadraAvversario[idxAvversario].Nome)}</div>`;
+                }
+                
+                updateBattleField();
+                updateTeamDisplay();
+                document.getElementById('battle-log').innerHTML += log;
+                
+                if (idxAvversario >= 3) {
+                    endBattle();
+                }
+                
+                turno++;
+                return;
+            }
+            
+            // Attacco dell'avversario
+            log += `<div class="log-entry turn-opponent">${translations[lang].logTurn(turno)}</div>`;
+            log += `<div class="log-entry attack">${translations[lang].logAttack(suo, mio, suo.attacca(mio))}</div>`;
+            
+            if (!mio.eVivo()) {
+                log += `<div class="log-entry switch">${translations[lang].logSwitch(mio.Nome)}</div>`;
+                idxGiocatore++;
+                if (idxGiocatore < 3) {
+                    log += `<div class="log-entry switch">${translations[lang].logEnter(squadraGiocatore[idxGiocatore].Nome)}</div>`;
+                }
+            }
+            
+            updateBattleField();
+            updateTeamDisplay();
+            document.getElementById('battle-log').innerHTML += log;
+            document.getElementById('battle-log').scrollTop = document.getElementById('battle-log').scrollHeight;
+            
+            if (idxGiocatore >= 3 || idxAvversario >= 3) {
+                endBattle();
+            }
+            
+            turno++;
+        }
+
+        // Funzione per terminare la battaglia
+        function endBattle() {
+            document.getElementById('next-turn').disabled = true;
+            document.getElementById('result-section').style.display = 'block';
+
+            // Mostra messaggio a tutto schermo
+            const fullscreen = document.getElementById('fullscreen-message');
+            fullscreen.style.display = 'flex';
+            fullscreen.innerHTML = "";
+
+            if (idxAvversario >= 3) {
+                fullscreen.innerHTML = translations[lang].win(nomeGiocatore);
+            } else {
+                fullscreen.innerHTML = translations[lang].lose(nomeAvversario);
+            }
+        }
+    </script>
+</body>
+</html>
