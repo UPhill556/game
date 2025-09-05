@@ -521,6 +521,34 @@
     font-weight: bold;
     border-radius: 6px;
 }
+
+/* Stili per le mosse - MODIFICATO: tutte sulla stessa linea */
+.move-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+.move-button {
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--black);
+    flex: 1;
+    min-width: 120px;
+    max-width: 160px;
+    text-align: center;
+}
+.move-button:hover {
+    transform: scale(1.05);
+    background: #ffeb3b;
+}
     </style>
 </head>
 <body>
@@ -556,10 +584,11 @@
                     <div class="vs" id="vs-label">VS</div>
                     <div class="battle-pokemon" id="opponent-pokemon"></div>
                 </div>
+                <div class="move-buttons" id="move-buttons"></div>
                 <div class="battle-log" id="battle-log">
                     Il log della battaglia apparirà qui...
                 </div>
-                <button id="next-turn">Prossimo Turno</button>
+                <button id="next-turn" style="display: none;">Prossimo Turno</button>
             </div>
             <div class="section" id="teams-section" style="display: none;">
                 <h2 id="teams-title">Squadre</h2>
@@ -582,158 +611,363 @@
     </div>
     <script>
         // Modifica traduzioni e placeholder
-const translations = {
-    it: {
-        subtitle: "Affronta il tuo avversario in una battaglia epica!",
-        startTitle: "Inizia la Battaglia",
-        labelName: "Inserisci il tuo nome:",
-        inputPlaceholder: "Inserisci il tuo nome",
-        startBtn: "Inizia la Battaglia",
-        chooseTitle: "Scegli i tuoi Pokémon",
-        chooseDesc: "Scegli 3 Pokémon dalla lista qui sotto:",
-        confirmTeam: "Conferma Squadra",
-        battleTitle: "Battaglia in Corso",
-        vs: "VS",
-        teamsTitle: "Squadre",
-        playerTeam: "La Tua Squadra",
-        opponentTeam: "Squadra Avversaria",
-        resultTitle: "Risultato Battaglia",
-        logStart: (nome, avv) => `Inizia la battaglia tra la squadra di ${nome} e ${avv}!<br>`,
-        logTurn: n => `=== TURNO ${n} ===`,
-        logField: (mio, suo) => `In campo: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
-        logAttack: (att, def, danno) => `${att.Nome} attacca ${def.Nome} e infligge ${danno} danni!<br>${def.Nome} ha ora ${def.Vita} HP<br>`,
-        logSwitch: nome => `${nome} è esausto!`,
-        logEnter: nome => `Entra in campo ${nome}!`,
-        win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULAZIONI!</span><br>
-            <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} hai vinto la battaglia!</span>
-            <div class="subtitle" style="color:#fff;">Premi F5 for giocare ancora!</div>`,
-        lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">PECCATO!</span><br>
-            <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} vince la battaglia!</span>
-            <div class="subtitle" style="color:#fff;">Premi F5 per riprovare!</div>`,
-        inputNameAlert: "Per favore inserisci il tuo nome!",
-        select3: "Hai già selezionato 3 Pokémon!"
-    },
-    en: {
-        subtitle: "Face your opponent in an epic battle!",
-        startTitle: "Start Battle",
-        labelName: "Enter your name:",
-        inputPlaceholder: "Enter your name",
-        startBtn: "Start Battle",
-        chooseTitle: "Choose your Pokémon",
-        chooseDesc: "Pick 3 Pokémon from the list below:",
-        confirmTeam: "Confirm Team",
-        battleTitle: "Battle in Progress",
-        vs: "VS",
-        teamsTitle: "Teams",
-        playerTeam: "Your Team",
-        opponentTeam: "Opponent Team",
-        resultTitle: "Battle Result",
-        logStart: (nome, avv) => `The battle between ${nome}'s team and ${avv} begins!<br>`,
-        logTurn: n => `=== TURN ${n} ===`,
-        logField: (mio, suo) => `On the field: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
-        logAttack: (att, def, danno) => `${att.Nome} attacks ${def.Nome} and deals ${danno} damage!<br>${def.Nome} now has ${def.Vita} HP<br>`,
-        logSwitch: nome => `${nome} has fainted!`,
-        logEnter: nome => `${nome} enters the field!`,
-        win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULATIONS!</span><br>
-            <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} won the battle!</span>
-            <div class="subtitle" style="color:#fff;">Press F5 to play again!</div>`,
-        lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">TOO BAD!</span><br>
-            <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} wins the battle!</span>
-            <div class="subtitle" style="color:#fff;">Press F5 to try again!</div>`,
-        inputNameAlert: "Please enter your name!",
-        select3: "You have already selected 3 Pokémon!"
-    }
-};
-let lang = "it";
-function setLang(l) {
-    lang = l;
-    document.getElementById('lang-it').classList.toggle('selected', l === "it");
-    document.getElementById('lang-en').classList.toggle('selected', l === "en");
-    document.getElementById('subtitle').textContent = translations[l].subtitle;
-    document.getElementById('start-title').textContent = translations[l].startTitle;
-    document.getElementById('label-name').textContent = translations[l].labelName;
-    document.getElementById('player-name').placeholder = translations[l].inputPlaceholder;
-    document.getElementById('start-btn').textContent = translations[l].startBtn;
-    document.getElementById('choose-title').textContent = translations[l].chooseTitle;
-    document.getElementById('choose-desc').textContent = translations[l].chooseDesc;
-    document.getElementById('confirm-team').textContent = translations[l].confirmTeam;
-    document.getElementById('battle-title').textContent = translations[l].battleTitle;
-    document.getElementById('vs-label').textContent = translations[l].vs;
-    document.getElementById('teams-title').textContent = translations[l].teamsTitle;
-    document.getElementById('player-team-title').textContent = translations[l].playerTeam;
-    document.getElementById('opponent-team-title').textContent = translations[l].opponentTeam;
-    document.getElementById('result-title').textContent = translations[l].resultTitle;
-    document.getElementById('battle-log').textContent = l === "it" ? "Il log della battaglia apparirà qui..." : "The battle log will appear here...";
+        const translations = {
+            it: {
+                subtitle: "Affronta il tuo avversario in una battaglia epica!",
+                startTitle: "Inizia la Battaglia",
+                labelName: "Inserisci il tuo nome:",
+                inputPlaceholder: "Inserisci il tuo nome",
+                startBtn: "Inizia la Battaglia",
+                chooseTitle: "Scegli i tuoi Pokémon",
+                chooseDesc: "Scegli 3 Pokémon dalla lista qui sotto:",
+                confirmTeam: "Conferma Squadra",
+                battleTitle: "Battaglia in Corso",
+                vs: "VS",
+                teamsTitle: "Squadre",
+                playerTeam: "La Tua Squadra",
+                opponentTeam: "Squadra Avversaria",
+                resultTitle: "Risultato Battaglia",
+                logStart: (nome, avv) => `Inizia la battaglia tra la squadra di ${nome} e ${avv}!<br>`,
+                logTurn: n => `=== TURNO ${n} ===`,
+                logField: (mio, suo) => `In campo: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
+                logAttack: (att, def, danno, mossa, efficacia) => {
+                    let efficaciaText = "";
+                    if (efficacia > 1) efficaciaText = " È superefficace!";
+                    else if (efficacia < 1 && efficacia > 0) efficaciaText = " Non è molto efficace...";
+                    else if (efficacia === 0) efficaciaText = " Non ha effetto!";
+                    
+                    return `${att.Nome} usa ${mossa}!${efficaciaText}<br>${def.Nome} subisce ${danno} danni!<br>${def.Nome} ha ora ${def.Vita} HP<br>`;
+                },
+                logSwitch: nome => `${nome} è esausto!`,
+                logEnter: nome => `Entra in campo ${nome}!`,
+                logFirstTurn: nome => `${nome} attacca per primo!`,
+                win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULAZIONI!</span><br>
+                    <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} hai vinto la battaglia!</span>
+                    <div class="subtitle" style="color:#fff;">Premi F5 for giocare ancora!</div>`,
+                lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">PECCATO!</span><br>
+                    <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} vince la battaglia!</span>
+                    <div class="subtitle" style="color:#fff;">Premi F5 per riprovare!</div>`,
+                inputNameAlert: "Per favore inserisci il tuo nome!",
+                select3: "Hai già selezionato 3 Pokémon!",
+                chooseMove: "Scegli una mossa:"
+            },
+            en: {
+                subtitle: "Face your opponent in an epic battle!",
+                startTitle: "Start Battle",
+                labelName: "Enter your name:",
+                inputPlaceholder: "Enter your name",
+                startBtn: "Start Battle",
+                chooseTitle: "Choose your Pokémon",
+                chooseDesc: "Pick 3 Pokémon from the list below:",
+                confirmTeam: "Confirm Team",
+                battleTitle: "Battle in Progress",
+                vs: "VS",
+                teamsTitle: "Teams",
+                playerTeam: "Your Team",
+                opponentTeam: "Opponent Team",
+                resultTitle: "Battle Result",
+                logStart: (nome, avv) => `The battle between ${nome}'s team and ${avv} begins!<br>`,
+                logTurn: n => `=== TURN ${n} ===`,
+                logField: (mio, suo) => `On the field: ${mio.Nome} (${mio.Tipo}, ${mio.Vita} HP) vs ${suo.Nome} (${suo.Tipo}, ${suo.Vita} HP)`,
+                logAttack: (att, def, danno, mossa, efficacia) => {
+                    let efficaciaText = "";
+                    if (efficacia > 1) efficaciaText = " It's super effective!";
+                    else if (efficacia < 1 && efficacia > 0) efficaciaText = " It's not very effective...";
+                    else if (efficacia === 0) efficaciaText = " It has no effect!";
+                    
+                    return `${att.Nome} uses ${mossa}!${efficaciaText}<br>${def.Nome} takes ${danno} damage!<br>${def.Nome} now has ${def.Vita} HP<br>`;
+                },
+                logSwitch: nome => `${nome} has fainted!`,
+                logEnter: nome => `${nome} enters the field!`,
+                logFirstTurn: nome => `${nome} attacks first!`,
+                win: (nome) => `<span style="font-size:1.8em; color:#ffcb05; text-shadow:2px 2px 0 #3949ab;">CONGRATULATIONS!</span><br>
+                    <span style="font-size:1.2em; color:#fff; text-shadow:1px 1px 0 #3949ab;">${nome} won the battle!</span>
+                    <div class="subtitle" style="color:#fff;">Press F5 to play again!</div>`,
+                lose: (nome) => `<span style="font-size:1.8em; color:#fff; text-shadow:2px 2px 0 #3949ab;">TOO BAD!</span><br>
+                    <span style="font-size:1.2em; color:#ffcb05; text-shadow:1px 1px 0 #3949ab;">${nome} wins the battle!</span>
+                    <div class="subtitle" style="color:#fff;">Press F5 to try again!</div>`,
+                inputNameAlert: "Please enter your name!",
+                select3: "You have already selected 3 Pokémon!",
+                chooseMove: "Choose a move:"
+            }
+        };
 
-    // Aggiorna i badge dei tipi nella lista dei Pokémon
-    document.querySelectorAll('.pokemon-card').forEach(card => {
-        const idx = card.dataset.index;
-        const pokemon = TuttiIPokemon[idx];
-        let typeBadges = "";
-        const types = pokemon.Tipo.split('/');
-        types.forEach(type => {
-            const typeClass = `type-${type.toLowerCase()}`;
-            typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+        // Dizionario mosse ITA -> ENG
+        const moveTranslations = {
+            "Lanciafiamme": "Flamethrower",
+            "Fuocobomba": "Fire Blast",
+            "Nitrocarica": "Flame Charge",
+            "Idropompa": "Hydro Pump",
+            "Bollaraggio": "Bubble Beam",
+            "Pistolacqua": "Water Gun",
+            "Solarraggio": "Solar Beam",
+            "Foglielama": "Razor Leaf",
+            "Parassiseme": "Leech Seed",
+            "Fulmine": "Thunderbolt",
+            "Tuonoshock": "Thunder Shock",
+            "Scarica": "Discharge",
+            "Psichico": "Psychic",
+            "Confusione": "Confusion",
+            "Psicoraggio": "Psybeam",
+            "BodySlam": "Body Slam",
+            "HyperVoce": "Hyper Voice",
+            "Doppiocolpo": "Double Hit",
+            "MovimentoSismico": "Earthquake",
+            "Fangoschizzo": "Mud Slap",
+            "ColpoCoda": "Tail Whip",
+            "Azione": "Quick Attack",
+            "Botta": "Pound",
+            "Graffio": "Scratch",
+            "Comete": "Swift",
+            "Geloraggio": "Ice Beam",
+            "Ventogelato": "Ice Wind",
+        };
+
+        // Dizionario tipi ITA -> ENG
+        const typeTranslations = {
+            "Fuoco": "Fire",
+            "Acqua": "Water",
+            "Erba": "Grass",
+            "Veleno": "Poison",
+            "Normale": "Normal",
+            "Volante": "Flying",
+            "Coleottero": "Bug",
+            "Psico": "Psychic",
+            "Ghiaccio": "Ice",
+            "Elettro": "Electric",
+            "Lotta": "Fighting",
+            "Roccia": "Rock",
+            "Spettro": "Ghost",
+            "Drago": "Dragon",
+            "Buio": "Dark",
+            "Acciaio": "Steel",
+            "Folletto": "Fairy",
+            "Terra": "Ground"
+        };
+
+        // Funzione per tradurre i tipi
+        function translateType(type, lang) {
+            if (lang === "en") {
+                return typeTranslations[type] || type;
+            }
+            return type;
+        }
+
+        // Funzione per tradurre le mosse
+        function translateMove(move, lang) {
+            if (lang === "en") {
+                return moveTranslations[move] || move;
+            }
+            return move;
+        }
+
+        let lang = "it";
+        function setLang(l) {
+            lang = l;
+            document.getElementById('lang-it').classList.toggle('selected', l === "it");
+            document.getElementById('lang-en').classList.toggle('selected', l === "en");
+            document.getElementById('subtitle').textContent = translations[l].subtitle;
+            document.getElementById('start-title').textContent = translations[l].startTitle;
+            document.getElementById('label-name').textContent = translations[l].labelName;
+            document.getElementById('player-name').placeholder = translations[l].inputPlaceholder;
+            document.getElementById('start-btn').textContent = translations[l].startBtn;
+            document.getElementById('choose-title').textContent = translations[l].chooseTitle;
+            document.getElementById('choose-desc').textContent = translations[l].chooseDesc;
+            document.getElementById('confirm-team').textContent = translations[l].confirmTeam;
+            document.getElementById('battle-title').textContent = translations[l].battleTitle;
+            document.getElementById('vs-label').textContent = translations[l].vs;
+            document.getElementById('teams-title').textContent = translations[l].teamsTitle;
+            document.getElementById('player-team-title').textContent = translations[l].playerTeam;
+            document.getElementById('opponent-team-title').textContent = translations[l].opponentTeam;
+            document.getElementById('result-title').textContent = translations[l].resultTitle;
+            document.getElementById('battle-log').textContent = l === "it" ? "Il log della battaglia apparirà qui..." : "The battle log will appear here...";
+
+            // Aggiorna i badge dei tipi nella lista dei Pokémon
+            document.querySelectorAll('.pokemon-card').forEach(card => {
+                const idx = card.dataset.index;
+                const pokemon = TuttiIPokemon[idx];
+                let typeBadges = "";
+                const types = pokemon.Tipo.split('/');
+                types.forEach(type => {
+                    const typeClass = `type-${type.toLowerCase()}`;
+                    typeBadges += `<span class="type-badge ${typeClass}">${translateType(type, lang)}</span> `;
+                });
+                card.querySelector('div:last-child').innerHTML = typeBadges;
+            });
+
+            updateTeamDisplay();
+            updateBattleField();
+            updateMoveButtons();
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('lang-it').onclick = () => setLang('it');
+            document.getElementById('lang-en').onclick = () => setLang('en');
+            setLang('it');
         });
-        card.querySelector('div:last-child').innerHTML = typeBadges;
-    });
-
-    updateTeamDisplay();
-    updateBattleField();
-}
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('lang-it').onclick = () => setLang('it');
-    document.getElementById('lang-en').onclick = () => setLang('en');
-    setLang('it');
-});
 
         // Classi base e derivate
         class Pokemon {
-            constructor(nome, vita, attacco, tipo = "Normale") {
+            constructor(nome, vita, attacco, difesa, velocita, tipo = "Normale") {
                 this.Nome = nome;
                 this.Vita = vita;
-                this.AttaccoBase = attacco;
-                this.Tipo = tipo;
                 this.VitaMax = vita;
+                this.AttaccoBase = attacco;
+                this.DifesaBase = difesa;
+                this.Velocita = velocita;
+                this.Tipo = tipo;
+                this.Mosse = this.generaMosse();
             }
 
-            attacca(avversario) {
-                const danno = this.calcolaDanno(avversario);
-                avversario.Vita -= danno;
-                if (avversario.Vita < 0) avversario.Vita = 0;
+            // Genera mosse fedeli al gioco per ogni Pokémon
+            generaMosse() {
+                // Mappa delle mosse per ogni Pokémon (fedeli ai giochi originali)
+                const mossePerPokemon = {
+                    "Bulbasaur": ["Parassiseme", "Foglielama", "Botta"],
+                    "Ivysaur": ["Parassiseme", "Foglielama", "Solarraggio"],
+                    "Venusaur": ["Parassiseme", "Solarraggio", "MovimentoSismico"],
+                    "Charmander": ["Graffio", "Nitrocarica", "Lanciafiamme"],
+                    "Charmeleon": ["Graffio", "Nitrocarica", "Lanciafiamme"],
+                    "Charizard": ["Lanciafiamme", "Fuocobomba", "Volo"],
+                    "Squirtle": ["Bolla", "Pistolacqua", "Ritirata"],
+                    "Wartortle": ["Pistolacqua", "Bollaraggio", "Idropompa"],
+                    "Blastoise": ["Idropompa", "Bollaraggio", "Colpodicoda"],
+                    "Pikachu": ["Tuonoshock", "Fulmine", "Azione"],
+                    "Raichu": ["Fulmine", "Tuonoshock", "Scarica"],
+                    // Aggiungi qui le mosse per gli altri Pokémon...
+                };
 
-                return `${this.Nome} attacca ${avversario.Nome} e infligge ${danno} danni!<br>${avversario.Nome} ha ora ${avversario.Vita} HP<br>`;
-            }
-
-            calcolaDanno(avversario) {
-                let danno = this.AttaccoBase;
-                danno += Math.floor(Math.random() * 12) - 5;
-
-                let moltiplicatore = 1.0;
-                switch (this.Tipo) {
-                    case "Fuoco":
-                        if (avversario.Tipo === "Erba") moltiplicatore = 1.5;
-                        if (avversario.Tipo === "Acqua") moltiplicatore = 0.5;
-                        break;
-                    case "Acqua":
-                        if (avversario.Tipo === "Fuoco") moltiplicatore = 1.5;
-                        if (avversario.Tipo === "Erba") moltiplicatore = 0.5;
-                        break;
-                    case "Erba":
-                        if (avversario.Tipo === "Acqua") moltiplicatore = 1.5;
-                        if (avversario.Tipo === "Fuoco") moltiplicatore = 0.5;
-                        break;
-                    case "Elettro":
-                        if (avversario.Tipo === "Acqua") moltiplicatore = 1.5;
-                        if (avversario.Tipo === "Erba") moltiplicatore = 0.5;
-                        break;
-                    case "Ghiaccio":
-                        if (avversario.Tipo === "Erba") moltiplicatore = 1.5;
-                        if (avversario.Tipo === "Fuoco") moltiplicatore = 0.5;
-                        break;
+                // Se il Pokémon ha mosse specifiche, usale
+                if (mossePerPokemon[this.Nome]) {
+                    return mossePerPokemon[this.Nome];
                 }
 
-                return Math.floor(danno * moltiplicatore);
+                // Altrimenti usa mosse generiche basate sul tipo
+                const mosseComuni = ["Botta", "Graffio", "Azione", "Comete"];
+                const mossePerTipo = {
+                    "Fuoco": ["Lanciafiamme", "Fuocobomba", "Nitrocarica"],
+                    "Acqua": ["Idropompa", "Bollaraggio", "Pistolacqua"],
+                    "Erba": ["Solarraggio", "Foglielama", "Parassiseme"],
+                    "Elettro": ["Fulmine", "Tuonoshock", "Scarica"],
+                    "Psico": ["Psichico", "Confusione", "Psicoraggio"],
+                    "Normale": ["BodySlam", "HyperVoce", "Doppiocolpo"],
+                    "Terra": ["MovimentoSismico", "Fangoschizzo", "ColpoCoda"],
+                    "Ghiaccio": ["Geloraggio", "Ventogelato", "Comete"]
+                };
+                
+                const tipoPrincipale = this.Tipo.split('/')[0];
+                const mosseTipo = mossePerTipo[tipoPrincipale] || ["Botta"];
+                
+                // Seleziona 2 mosse casuali dal tipo + 2 mosse comuni
+                const mosseSelezionate = [];
+                if (mosseTipo.length > 0) {
+                    const mossa1 = mosseTipo[Math.floor(Math.random() * mosseTipo.length)];
+                    mosseSelezionate.push(mossa1);
+                    
+                    // Aggiungi una seconda mossa di tipo se disponibile
+                    if (mosseTipo.length > 1) {
+                        let mossa2;
+                        do {
+                            mossa2 = mosseTipo[Math.floor(Math.random() * mosseTipo.length)];
+                        } while (mossa2 === mossa1 && mosseTipo.length > 1);
+                        mosseSelezionate.push(mossa2);
+                    }
+                }
+                
+                // Aggiungi mosse comuni fino a 4 mosse totali
+                while (mosseSelezionate.length < 4) {
+                    const mossaComune = mosseComuni[Math.floor(Math.random() * mosseComuni.length)];
+                    if (!mosseSelezionate.includes(mossaComune)) {
+                        mosseSelezionate.push(mossaComune);
+                    }
+                }
+                
+                return mosseSelezionate;
+            }
+
+            // Calcola il danno con moltiplicatori più complessi
+            calcolaDanno(avversario, mossa) {
+                let dannoBase = this.AttaccoBase;
+                let moltiplicatore = 1.0;
+                
+                // Modificatore in base alla mossa
+                switch(mossa) {
+                    case "Lanciafiamme":
+                    case "Idropompa":
+                    case "Solarraggio":
+                    case "Fulmine":
+                    case "Psichico":
+                    case "MovimentoSismico":
+                    case "Geloraggio":
+                        dannoBase = Math.floor(this.AttaccoBase * 1.3);
+                        break;
+                    case "Fuocobomba":
+                    case "Bollaraggio":
+                    case "Foglielama":
+                    case "Tuonoshock":
+                    case "Confusione":
+                    case "Ventogelato":
+                        dannoBase = Math.floor(this.AttaccoBase * 1.2);
+                        break;
+                    case "BodySlam":
+                    case "HyperVoce":
+                    case "Nitrocarica":
+                    case "Scarica":
+                    case "Psicoraggio":
+                        dannoBase = Math.floor(this.AttaccoBase * 1.1);
+                        break;
+                }
+                
+                // Moltiplicatori di tipo complessi
+                const tabelleEfficacia = {
+                    "Fuoco": { "Fuoco": 0.5, "Acqua": 0.5, "Erba": 2.0, "Ghiaccio": 2.0, "Coleottero": 2.0, "Acciaio": 2.0, "Roccia": 0.5 },
+                    "Acqua": { "Fuoco": 2.0, "Acqua": 0.5, "Erba": 0.5, "Terra": 2.0, "Roccia": 2.0, "Drago": 0.5 },
+                    "Erba": { "Fuoco": 0.5, "Acqua": 2.0, "Erba": 0.5, "Terra": 2.0, "Roccia": 2.0, "Volante": 0.5, "Coleottero": 0.5, "Veleno": 0.5, "Drago": 0.5, "Acciaio": 0.5 },
+                    "Elettro": { "Acqua": 2.0, "Erba": 0.5, "Elettro": 0.5, "Terra": 0, "Volante": 2.0, "Drago": 0.5 },
+                    "Ghiaccio": { "Fuoco": 0.5, "Acqua": 0.5, "Erba": 2.0, "Ghiaccio": 0.5, "Terra": 2.0, "Volante": 2.0, "Drago": 2.0 },
+                    "Lotta": { "Normale": 2.0, "Ghiaccio": 2.0, "Roccia": 2.0, "Buio": 2.0, "Acciaio": 2.0, "Psico": 0.5, "Volante": 0.5, "Coleottero": 0.5, "Veleno": 0.5, "Spettro": 0 },
+                    "Psico": { "Lotta": 2.0, "Veleno": 2.0, "Psico": 0.5, "Buio": 0, "Acciaio": 0.5 },
+                    "Terra": { "Fuoco": 2.0, "Elettro": 2.0, "Erba": 0.5, "Veleno": 2.0, "Roccia": 2.0, "Volante": 0, "Coleottero": 0.5, "Acciaio": 2.0 },
+                    "Roccia": { "Fuoco": 2.0, "Ghiaccio": 2.0, "Lotta": 0.5, "Terra": 0.5, "Volante": 2.0, "Coleottero": 2.0, "Acciaio": 0.5 },
+                    "Volante": { "Erba": 2.0, "Lotta": 2.0, "Coleottero": 2.0, "Elettro": 0.5, "Roccia": 0.5, "Acciaio": 0.5 },
+                    "Veleno": { "Erba": 2.0, "Folletto": 2.0, "Veleno": 0.5, "Terra": 0.5, "Roccia": 0.5, "Spettro": 0.5, "Acciaio": 0 },
+                    "Spettro": { "Psico": 2.0, "Spettro": 2.0, "Buio": 0.5, "Normale": 0, "Acciaio": 0.5 },
+                    "Drago": { "Drago": 2.0, "Acciaio": 0.5, "Folletto": 0 },
+                    "Buio": { "Psico": 2.0, "Spettro": 2.0, "Buio": 0.5, "Lotta": 0.5, "Folletto": 0.5 },
+                    "Acciaio": { "Ghiaccio": 2.0, "Roccia": 2.0, "Folletto": 2.0, "Acciaio": 0.5, "Fuoco": 0.5, "Acqua": 0.5, "Elettro": 0.5 },
+                    "Folletto": { "Lotta": 2.0, "Drago": 2.0, "Buio": 2.0, "Veleno": 0.5, "Acciaio": 0.5, "Fuoco": 0.5 },
+                    "Normale": { "Roccia": 0.5, "Acciaio": 0.5, "Spettro": 0 }
+                };
+                
+                // Calcola efficacia for ogni tipo del Pokémon attaccante e difensore
+                const mieiTipi = this.Tipo.split('/');
+                const suoiTipi = avversario.Tipo.split('/');
+                
+                for (const mioTipo of mieiTipi) {
+                    if (tabelleEfficacia[mioTipo]) {
+                        for (const suoTipo of suoiTipi) {
+                            if (tabelleEfficacia[mioTipo][suoTipo]) {
+                                moltiplicatore *= tabelleEfficacia[mioTipo][suoTipo];
+                            }
+                        }
+                    }
+                }
+                
+                // Variabilità del danno (85%-100%)
+                const variabilita = 0.85 + (Math.random() * 0.15);
+                let dannoFinale = Math.floor(dannoBase * moltiplicatore * variabilita);
+                
+                // Riduzione del danno in base alla difesa
+                dannoFinale = Math.max(1, Math.floor(dannoFinale * (100 / (100 + avversario.DifesaBase))));
+                
+                return {danno: dannoFinale, efficacia: moltiplicatore};
+            }
+
+            attacca(avversario, mossa) {
+                const risultato = this.calcolaDanno(avversario, mossa);
+                avversario.Vita -= risultato.danno;
+                if (avversario.Vita < 0) avversario.Vita = 0;
+
+                return {danno: risultato.danno, efficacia: risultato.efficacia};
             }
 
             eVivo() {
@@ -741,234 +975,162 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        class Fuoco extends Pokemon {
-            constructor(nome, vita = 100, attacco = 20) {
-                super(nome, vita, attacco, "Fuoco");
-            }
-        }
-
-        class Acqua extends Pokemon {
-            constructor(nome, vita = 100, attacco = 20) {
-                super(nome, vita, attacco, "Acqua");
-            }
-        }
-
-        class Erba extends Pokemon {
-            constructor(nome, vita = 100, attacco = 20) {
-                super(nome, vita, attacco, "Erba");
-            }
-        }
-
-        class Psico extends Pokemon {
-            constructor(nome, vita = 90, attacco = 21) {
-                super(nome, vita, attacco, "Psico");
-            }
-        }
-
-        class Ghiaccio extends Pokemon {
-            constructor(nome, vita = 95, attacco = 18) {
-                super(nome, vita, attacco, "Ghiaccio");
-            }
-        }
-
-        class Normale extends Pokemon {
-            constructor(nome, vita = 100, attacco = 17) {
-                super(nome, vita, attacco, "Normale");
-            }
-        }
-
-        class Elettro extends Pokemon {
-            constructor(nome, vita = 90, attacco = 20) {
-                super(nome, vita, attacco, "Elettro");
-            }
-        }
-
-        // Lista dei 151 Pokémon di 1° gen con tipi fedeli all'originale
+        // Lista dei 151 Pokémon di 1° gen con statistiche bilanciate
         const TuttiIPokemon = [
-            new Pokemon("Bulbasaur", 45, 49, "Erba/Veleno"),
-            new Pokemon("Ivysaur", 60, 62, "Erba/Veleno"),
-            new Pokemon("Venusaur", 80, 82, "Erba/Veleno"),
-            new Pokemon("Charmander", 39, 52, "Fuoco"),
-            new Pokemon("Charmeleon", 58, 64, "Fuoco"),
-            new Pokemon("Charizard", 78, 84, "Fuoco/Volante"),
-            new Pokemon("Squirtle", 44, 48, "Acqua"),
-            new Pokemon("Wartortle", 59, 63, "Acqua"),
-            new Pokemon("Blastoise", 79, 83, "Acqua"),
-            new Pokemon("Caterpie", 45, 30, "Coleottero"),
-            new Pokemon("Metapod", 50, 20, "Coleottero"),
-            new Pokemon("Butterfree", 60, 45, "Coleottero/Volante"),
-            new Pokemon("Weedle", 40, 35, "Coleottero/Veleno"),
-            new Pokemon("Kakuna", 45, 25, "Coleottero/Veleno"),
-            new Pokemon("Beedrill", 65, 90, "Coleottero/Veleno"),
-            new Pokemon("Pidgey", 40, 45, "Normale/Volante"),
-            new Pokemon("Pidgeotto", 63, 60, "Normale/Volante"),
-            new Pokemon("Pidgeot", 83, 80, "Normale/Volante"),
-            new Pokemon("Rattata", 30, 56, "Normale"),
-            new Pokemon("Raticate", 55, 81, "Normale"),
-            new Pokemon("Spearow", 40, 60, "Normale/Volante"),
-            new Pokemon("Fearow", 65, 90, "Normale/Volante"),
-            new Pokemon("Ekans", 35, 60, "Veleno"),
-            new Pokemon("Arbok", 60, 85, "Veleno"),
-            new Pokemon("Pikachu", 35, 55, "Elettro"),
-            new Pokemon("Raichu", 60, 90, "Elettro"),
-            new Pokemon("Sandshrew", 50, 75, "Terra"),
-            new Pokemon("Sandslash", 75, 100, "Terra"),
-            new Pokemon("Nidoran♀", 55, 47, "Veleno"),
-            new Pokemon("Nidorina", 70, 62, "Veleno"),
-            new Pokemon("Nidoqueen", 90, 92, "Veleno/Terra"),
-            new Pokemon("Nidoran♂", 46, 57, "Veleno"),
-            new Pokemon("Nidorino", 61, 72, "Veleno"),
-            new Pokemon("Nidoking", 81, 102, "Veleno/Terra"),
-            new Pokemon("Clefairy", 70, 45, "Folletto"),
-            new Pokemon("Clefable", 95, 70, "Folletto"),
-            new Pokemon("Vulpix", 38, 41, "Fuoco"),
-            new Pokemon("Ninetales", 73, 76, "Fuoco"),
-            new Pokemon("Jigglypuff", 115, 45, "Normale/Folletto"),
-            new Pokemon("Wigglytuff", 140, 70, "Normale/Folletto"),
-            new Pokemon("Zubat", 40, 45, "Veleno/Volante"),
-            new Pokemon("Golbat", 75, 80, "Veleno/Volante"),
-            new Pokemon("Oddish", 45, 50, "Erba/Veleno"),
-            new Pokemon("Gloom", 60, 65, "Erba/Veleno"),
-            new Pokemon("Vileplume", 75, 80, "Erba/Veleno"),
-            new Pokemon("Paras", 35, 70, "Coleottero/Erba"),
-            new Pokemon("Parasect", 60, 95, "Coleottero/Erba"),
-            new Pokemon("Venonat", 60, 55, "Coleottero/Veleno"),
-            new Pokemon("Venomoth", 70, 65, "Coleottero/Veleno"),
-            new Pokemon("Diglett", 10, 55, "Terra"),
-            new Pokemon("Dugtrio", 35, 80, "Terra"),
-            new Pokemon("Meowth", 40, 45, "Normale"),
-            new Pokemon("Persian", 65, 70, "Normale"),
-            new Pokemon("Psyduck", 50, 52, "Acqua"),
-            new Pokemon("Golduck", 80, 82, "Acqua"),
-            new Pokemon("Mankey", 40, 80, "Lotta"),
-            new Pokemon("Primeape", 65, 105, "Lotta"),
-            new Pokemon("Growlithe", 55, 70, "Fuoco"),
-            new Pokemon("Arcanine", 90, 110, "Fuoco"),
-            new Pokemon("Poliwag", 40, 50, "Acqua"),
-            new Pokemon("Poliwhirl", 65, 65, "Acqua"),
-            new Pokemon("Poliwrath", 90, 85, "Acqua/Lotta"),
-            new Pokemon("Abra", 25, 20, "Psico"),
-            new Pokemon("Kadabra", 40, 35, "Psico"),
-            new Pokemon("Alakazam", 55, 50, "Psico"),
-            new Pokemon("Machop", 70, 80, "Lotta"),
-            new Pokemon("Machoke", 80, 100, "Lotta"),
-            new Pokemon("Machamp", 90, 130, "Lotta"),
-            new Pokemon("Bellsprout", 50, 75, "Erba/Veleno"),
-            new Pokemon("Weepinbell", 65, 90, "Erba/Veleno"),
-            new Pokemon("Victreebel", 80, 105, "Erba/Veleno"),
-            new Pokemon("Tentacool", 40, 40, "Acqua/Veleno"),
-            new Pokemon("Tentacruel", 80, 70, "Acqua/Veleno"),
-            new Pokemon("Geodude", 40, 80, "Roccia/Terra"),
-            new Pokemon("Graveler", 55, 95, "Roccia/Terra"),
-            new Pokemon("Golem", 80, 110, "Roccia/Terra"),
-            new Pokemon("Ponyta", 50, 85, "Fuoco"),
-            new Pokemon("Rapidash", 65, 100, "Fuoco"),
-            new Pokemon("Slowpoke", 90, 65, "Acqua/Psico"),
-            new Pokemon("Slowbro", 95, 75, "Acqua/Psico"),
-            new Pokemon("Magnemite", 25, 35, "Elettro/Acciaio"),
-            new Pokemon("Magneton", 50, 60, "Elettro/Acciaio"),
-            new Pokemon("Farfetch'd", 52, 65, "Normale/Volante"),
-            new Pokemon("Doduo", 35, 85, "Normale/Volante"),
-            new Pokemon("Dodrio", 60, 110, "Normale/Volante"),
-            new Pokemon("Seel", 65, 45, "Acqua"),
-            new Pokemon("Dewgong", 90, 70, "Acqua/Ghiaccio"),
-            new Pokemon("Grimer", 80, 80, "Veleno"),
-            new Pokemon("Muk", 105, 105, "Veleno"),
-            new Pokemon("Shellder", 30, 65, "Acqua"),
-            new Pokemon("Cloyster", 50, 95, "Acqua/Ghiaccio"),
-            new Pokemon("Gastly", 30, 35, "Spettro/Veleno"),
-            new Pokemon("Haunter", 45, 50, "Spettro/Veleno"),
-            new Pokemon("Gengar", 60, 65, "Spettro/Veleno"),
-            new Pokemon("Onix", 35, 45, "Roccia/Terra"),
-            new Pokemon("Drowzee", 60, 48, "Psico"),
-            new Pokemon("Hypno", 85, 73, "Psico"),
-            new Pokemon("Krabby", 30, 105, "Acqua"),
-            new Pokemon("Kingler", 55, 130, "Acqua"),
-            new Pokemon("Voltorb", 40, 30, "Elettro"),
-            new Pokemon("Electrode", 60, 50, "Elettro"),
-            new Pokemon("Exeggcute", 60, 40, "Erba/Psico"),
-            new Pokemon("Exeggutor", 95, 95, "Erba/Psico"),
-            new Pokemon("Cubone", 50, 50, "Terra"),
-            new Pokemon("Marowak", 60, 80, "Terra"),
-            new Pokemon("Hitmonlee", 50, 120, "Lotta"),
-            new Pokemon("Hitmonchan", 50, 105, "Lotta"),
-            new Pokemon("Lickitung", 90, 55, "Normale"),
-            new Pokemon("Koffing", 40, 65, "Veleno"),
-            new Pokemon("Weezing", 65, 90, "Veleno"),
-            new Pokemon("Rhyhorn", 80, 85, "Terra/Roccia"),
-            new Pokemon("Rhydon", 105, 130, "Terra/Roccia"),
-            new Pokemon("Chansey", 250, 5, "Normale"),
-            new Pokemon("Tangela", 65, 55, "Erba"),
-            new Pokemon("Kangaskhan", 105, 95, "Normale"),
-            new Pokemon("Horsea", 30, 40, "Acqua"),
-            new Pokemon("Seadra", 55, 65, "Acqua"),
-            new Pokemon("Goldeen", 45, 67, "Acqua"),
-            new Pokemon("Seaking", 80, 92, "Acqua"),
-            new Pokemon("Staryu", 30, 45, "Acqua"),
-            new Pokemon("Starmie", 60, 75, "Acqua/Psico"),
-            new Pokemon("Mr. Mime", 40, 45, "Psico/Folletto"),
-            new Pokemon("Scyther", 70, 110, "Coleottero/Volante"),
-            new Pokemon("Jynx", 65, 50, "Ghiaccio/Psico"),
-            new Pokemon("Electabuzz", 65, 83, "Elettro"),
-            new Pokemon("Magmar", 65, 95, "Fuoco"),
-            new Pokemon("Pinsir", 65, 125, "Coleottero"),
-            new Pokemon("Tauros", 75, 100, "Normale"),
-            new Pokemon("Magikarp", 20, 10, "Acqua"),
-            new Pokemon("Gyarados", 95, 125, "Acqua/Volante"),
-            new Pokemon("Lapras", 130, 85, "Acqua/Ghiaccio"),
-            new Pokemon("Ditto", 48, 48, "Normale"),
-            new Pokemon("Eevee", 55, 55, "Normale"),
-            new Pokemon("Vaporeon", 130, 65, "Acqua"),
-            new Pokemon("Jolteon", 65, 65, "Elettro"),
-            new Pokemon("Flareon", 65, 130, "Fuoco"),
-            new Pokemon("Porygon", 65, 60, "Normale"),
-            new Pokemon("Omanyte", 35, 40, "Roccia/Acqua"),
-            new Pokemon("Omastar", 70, 60, "Roccia/Acqua"),
-            new Pokemon("Kabuto", 30, 80, "Roccia/Acqua"),
-            new Pokemon("Kabutops", 60, 115, "Roccia/Acqua"),
-            new Pokemon("Aerodactyl", 80, 105, "Roccia/Volante"),
-            new Pokemon("Snorlax", 160, 110, "Normale"),
-            new Pokemon("Articuno", 90, 85, "Ghiaccio/Volante"),
-            new Pokemon("Zapdos", 90, 90, "Elettro/Volante"),
-            new Pokemon("Moltres", 90, 100, "Fuoco/Volante"),
-            new Pokemon("Dratini", 41, 64, "Drago"),
-            new Pokemon("Dragonair", 61, 84, "Drago"),
-            new Pokemon("Dragonite", 91, 134, "Drago/Volante"),
-            new Pokemon("Mewtwo", 106, 110, "Psico"),
-            new Pokemon("Mew", 100, 100, "Psico")
+            new Pokemon("Bulbasaur", 45, 49, 49, 45, "Erba/Veleno"),
+            new Pokemon("Ivysaur", 60, 62, 63, 60, "Erba/Veleno"),
+            new Pokemon("Venusaur", 80, 82, 83, 80, "Erba/Veleno"),
+            new Pokemon("Charmander", 39, 52, 43, 65, "Fuoco"),
+            new Pokemon("Charmeleon", 58, 64, 58, 80, "Fuoco"),
+            new Pokemon("Charizard", 78, 84, 78, 100, "Fuoco/Volante"),
+            new Pokemon("Squirtle", 44, 48, 65, 43, "Acqua"),
+            new Pokemon("Wartortle", 59, 63, 80, 58, "Acqua"),
+            new Pokemon("Blastoise", 79, 83, 100, 78, "Acqua"),
+            new Pokemon("Caterpie", 45, 30, 35, 45, "Coleottero"),
+            new Pokemon("Metapod", 50, 20, 55, 30, "Coleottero"),
+            new Pokemon("Butterfree", 60, 45, 50, 70, "Coleottero/Volante"),
+            new Pokemon("Weedle", 40, 35, 30, 50, "Coleottero/Veleno"),
+            new Pokemon("Kakuna", 45, 25, 50, 35, "Coleottero/Veleno"),
+            new Pokemon("Beedrill", 65, 90, 40, 75, "Coleottero/Veleno"),
+            new Pokemon("Pidgey", 40, 45, 40, 56, "Normale/Volante"),
+            new Pokemon("Pidgeotto", 63, 60, 55, 71, "Normale/Volante"),
+            new Pokemon("Pidgeot", 83, 80, 75, 101, "Normale/Volante"),
+            new Pokemon("Rattata", 30, 56, 35, 72, "Normale"),
+            new Pokemon("Raticate", 55, 81, 60, 97, "Normale"),
+            new Pokemon("Spearow", 40, 60, 30, 70, "Normale/Volante"),
+            new Pokemon("Fearow", 65, 90, 65, 100, "Normale/Volante"),
+            new Pokemon("Ekans", 35, 60, 44, 55, "Veleno"),
+            new Pokemon("Arbok", 60, 85, 69, 80, "Veleno"),
+            new Pokemon("Pikachu", 35, 55, 40, 90, "Elettro"),
+            new Pokemon("Raichu", 60, 90, 55, 110, "Elettro"),
+            new Pokemon("Sandshrew", 50, 75, 85, 40, "Terra"),
+            new Pokemon("Sandslash", 75, 100, 110, 65, "Terra"),
+            new Pokemon("Nidoran♀", 55, 47, 52, 41, "Veleno"),
+            new Pokemon("Nidorina", 70, 62, 67, 56, "Veleno"),
+            new Pokemon("Nidoqueen", 90, 92, 87, 76, "Veleno/Terra"),
+            new Pokemon("Nidoran♂", 46, 57, 40, 50, "Veleno"),
+            new Pokemon("Nidorino", 61, 72, 57, 65, "Veleno"),
+            new Pokemon("Nidoking", 81, 102, 77, 85, "Veleno/Terra"),
+            new Pokemon("Clefairy", 70, 45, 48, 35, "Folletto"),
+            new Pokemon("Clefable", 95, 70, 73, 60, "Folletto"),
+            new Pokemon("Vulpix", 38, 41, 40, 65, "Fuoco"),
+            new Pokemon("Ninetales", 73, 76, 75, 100, "Fuoco"),
+            new Pokemon("Jigglypuff", 115, 45, 20, 20, "Normale/Folletto"),
+            new Pokemon("Wigglytuff", 140, 70, 45, 45, "Normale/Folletto"),
+            new Pokemon("Zubat", 40, 45, 35, 55, "Veleno/Volante"),
+            new Pokemon("Golbat", 75, 80, 70, 90, "Veleno/Volante"),
+            new Pokemon("Oddish", 45, 50, 55, 30, "Erba/Veleno"),
+            new Pokemon("Gloom", 60, 65, 70, 40, "Erba/Veleno"),
+            new Pokemon("Vileplume", 75, 80, 85, 50, "Erba/Veleno"),
+            new Pokemon("Paras", 35, 70, 55, 25, "Coleottero/Erba"),
+            new Pokemon("Parasect", 60, 95, 80, 30, "Coleottero/Erba"),
+            new Pokemon("Venonat", 60, 55, 50, 45, "Coleottero/Veleno"),
+            new Pokemon("Venomoth", 70, 65, 60, 90, "Coleottero/Veleno"),
+            new Pokemon("Diglett", 10, 55, 25, 95, "Terra"),
+            new Pokemon("Dugtrio", 35, 80, 50, 120, "Terra"),
+            new Pokemon("Meowth", 40, 45, 35, 90, "Normale"),
+            new Pokemon("Persian", 65, 70, 60, 115, "Normale"),
+            new Pokemon("Psyduck", 50, 52, 48, 55, "Acqua"),
+            new Pokemon("Golduck", 80, 82, 78, 85, "Acqua"),
+            new Pokemon("Mankey", 40, 80, 35, 70, "Lotta"),
+            new Pokemon("Primeape", 65, 105, 60, 95, "Lotta"),
+            new Pokemon("Growlithe", 55, 70, 45, 60, "Fuoco"),
+            new Pokemon("Arcanine", 90, 110, 80, 95, "Fuoco"),
+            new Pokemon("Poliwag", 40, 50, 40, 90, "Acqua"),
+            new Pokemon("Poliwhirl", 65, 65, 65, 90, "Acqua"),
+            new Pokemon("Poliwrath", 90, 85, 95, 70, "Acqua/Lotta"),
+            new Pokemon("Abra", 25, 20, 15, 90, "Psico"),
+            new Pokemon("Kadabra", 40, 35, 30, 105, "Psico"),
+            new Pokemon("Alakazam", 55, 50, 45, 120, "Psico"),
+            new Pokemon("Machop", 70, 80, 50, 35, "Lotta"),
+            new Pokemon("Machoke", 80, 100, 70, 45, "Lotta"),
+            new Pokemon("Machamp", 90, 130, 80, 55, "Lotta"),
+            new Pokemon("Bellsprout", 50, 75, 35, 40, "Erba/Veleno"),
+            new Pokemon("Weepinbell", 65, 90, 50, 55, "Erba/Veleno"),
+            new Pokemon("Victreebel", 80, 105, 65, 70, "Erba/Veleno"),
+            new Pokemon("Tentacool", 40, 40, 35, 70, "Acqua/Veleno"),
+            new Pokemon("Tentacruel", 80, 70, 65, 100, "Acqua/Veleno"),
+            new Pokemon("Geodude", 40, 80, 100, 20, "Roccia/Terra"),
+            new Pokemon("Graveler", 55, 95, 115, 35, "Roccia/Terra"),
+            new Pokemon("Golem", 80, 110, 130, 45, "Roccia/Terra"),
+            new Pokemon("Ponyta", 50, 85, 55, 90, "Fuoco"),
+            new Pokemon("Rapidash", 65, 100, 70, 105, "Fuoco"),
+            new Pokemon("Slowpoke", 90, 65, 65, 15, "Acqua/Psico"),
+            new Pokemon("Slowbro", 95, 75, 110, 30, "Acqua/Psico"),
+            new Pokemon("Magnemite", 25, 35, 70, 45, "Elettro/Acciaio"),
+            new Pokemon("Magneton", 50, 60, 95, 70, "Elettro/Acciaio"),
+            new Pokemon("Farfetch'd", 52, 65, 55, 60, "Normale/Volante"),
+            new Pokemon("Doduo", 35, 85, 45, 75, "Normale/Volante"),
+            new Pokemon("Dodrio", 60, 110, 70, 100, "Normale/Volante"),
+            new Pokemon("Seel", 65, 45, 55, 45, "Acqua"),
+            new Pokemon("Dewgong", 90, 70, 80, 70, "Acqua/Ghiaccio"),
+            new Pokemon("Grimer", 80, 80, 50, 25, "Veleno"),
+            new Pokemon("Muk", 105, 105, 75, 50, "Veleno"),
+            new Pokemon("Shellder", 30, 65, 100, 40, "Acqua"),
+            new Pokemon("Cloyster", 50, 95, 180, 70, "Acqua/Ghiaccio"),
+            new Pokemon("Gastly", 30, 35, 30, 80, "Spettro/Veleno"),
+            new Pokemon("Haunter", 45, 50, 45, 95, "Spettro/Veleno"),
+            new Pokemon("Gengar", 60, 65, 60, 110, "Spettro/Veleno"),
+            new Pokemon("Onix", 35, 45, 160, 70, "Roccia/Terra"),
+            new Pokemon("Drowzee", 60, 48, 45, 42, "Psico"),
+            new Pokemon("Hypno", 85, 73, 70, 67, "Psico"),
+            new Pokemon("Krabby", 30, 105, 90, 50, "Acqua"),
+            new Pokemon("Kingler", 55, 130, 115, 75, "Acqua"),
+            new Pokemon("Voltorb", 40, 30, 50, 100, "Elettro"),
+            new Pokemon("Electrode", 60, 50, 70, 140, "Elettro"),
+            new Pokemon("Exeggcute", 60, 40, 80, 40, "Erba/Psico"),
+            new Pokemon("Exeggutor", 95, 95, 85, 55, "Erba/Psico"),
+            new Pokemon("Cubone", 50, 50, 95, 35, "Tterra"),
+            new Pokemon("Marowak", 60, 80, 110, 45, "Tterra"),
+            new Pokemon("Hitmonlee", 50, 120, 53, 87, "Lotta"),
+            new Pokemon("Hitmonchan", 50, 105, 79, 76, "Lotta"),
+            new Pokemon("Lickitung", 90, 55, 75, 30, "Normale"),
+            new Pokemon("Koffing", 40, 65, 95, 35, "Veleno"),
+            new Pokemon("Weezing", 65, 90, 120, 60, "Veleno"),
+            new Pokemon("Rhyhorn", 80, 85, 95, 25, "Tterra/Roccia"),
+            new Pokemon("Rhydon", 105, 130, 120, 40, "Tterra/Roccia"),
+            new Pokemon("Chansey", 250, 5, 5, 50, "Normale"),
+            new Pokemon("Tangela", 65, 55, 115, 60, "Erba"),
+            new Pokemon("Kangaskhan", 105, 95, 80, 90, "Normale"),
+            new Pokemon("Horsea", 30, 40, 70, 60, "Acqua"),
+            new Pokemon("Seadra", 55, 65, 95, 85, "Acqua"),
+            new Pokemon("Goldeen", 45, 67, 60, 63, "Acqua"),
+            new Pokemon("Seaking", 80, 92, 65, 68, "Acqua"),
+            new Pokemon("Staryu", 30, 45, 55, 85, "Acqua"),
+            new Pokemon("Starmie", 60, 75, 85, 115, "Acqua/Psico"),
+            new Pokemon("Mr. Mime", 40, 45, 65, 90, "Psico/Folletto"),
+            new Pokemon("Scyther", 70, 110, 80, 105, "Coleottero/Volante"),
+            new Pokemon("Jynx", 65, 50, 35, 95, "Ghiaccio/Psico"),
+            new Pokemon("Electabuzz", 65, 83, 57, 105, "Elettro"),
+            new Pokemon("Magmar", 65, 95, 57, 93, "Fuoco"),
+            new Pokemon("Pinsir", 65, 125, 100, 85, "Coleottero"),
+            new Pokemon("Tauros", 75, 100, 95, 110, "Normale"),
+            new Pokemon("Magikarp", 20, 10, 55, 80, "Acqua"),
+            new Pokemon("Gyarados", 95, 125, 79, 81, "Acqua/Volante"),
+            new Pokemon("Lapras", 130, 85, 80, 60, "Acqua/Ghiaccio"),
+            new Pokemon("Ditto", 48, 48, 48, 48, "Normale"),
+            new Pokemon("Eevee", 55, 55, 50, 55, "Normale"),
+            new Pokemon("Vaporeon", 130, 65, 60, 65, "Acqua"),
+            new Pokemon("Jolteon", 65, 65, 60, 130, "Elettro"),
+            new Pokemon("Flareon", 65, 130, 60, 65, "Fuoco"),
+            new Pokemon("Porygon", 65, 60, 70, 30, "Normale"),
+            new Pokemon("Omanyte", 35, 40, 100, 35, "Roccia/Acqua"),
+            new Pokemon("Omastar", 70, 60, 125, 55, "Roccia/Acqua"),
+            new Pokemon("Kabuto", 30, 80, 90, 55, "Roccia/Acqua"),
+            new Pokemon("Kabutops", 60, 115, 105, 80, "Roccia/Acqua"),
+            new Pokemon("Aerodactyl", 80, 105, 65, 130, "Roccia/Volante"),
+            new Pokemon("Snorlax", 160, 110, 65, 30, "Normale"),
+            new Pokemon("Articuno", 90, 85, 100, 85, "Ghiaccio/Volante"),
+            new Pokemon("Zapdos", 90, 90, 85, 100, "Elettro/Volante"),
+            new Pokemon("Moltres", 90, 100, 90, 90, "Fuoco/Volante"),
+            new Pokemon("Dratini", 41, 64, 45, 50, "Drago"),
+            new Pokemon("Dragonair", 61, 84, 65, 70, "Drago"),
+            new Pokemon("Dragonite", 91, 134, 95, 80, "Drago/Volante"),
+            new Pokemon("Mewtwo", 106, 110, 90, 130, "Psico"),
+            new Pokemon("Mew", 100, 100, 100, 100, "Psico")
         ];
 
-        // Dizionario tipi ITA -> ENG
-const typeTranslations = {
-    "Fuoco": "Fire",
-    "Acqua": "Water",
-    "Erba": "Grass",
-    "Veleno": "Poison",
-    "Normale": "Normal",
-    "Volante": "Flying",
-    "Coleottero": "Bug",
-    "Psico": "Psychic",
-    "Ghiaccio": "Ice",
-    "Elettro": "Electric",
-    "Lotta": "Fighting",
-    "Roccia": "Rock",
-    "Spettro": "Ghost",
-    "Drago": "Dragon",
-    "Buio": "Dark",
-    "Acciaio": "Steel",
-    "Folletto": "Fairy",
-    "Terra": "Ground"
-};
-
-// Funzione per tradurre i tipi
-function translateType(type, lang) {
-    if (lang === "en") {
-        return typeTranslations[type] || type;
-    }
-    return type;
-}
-
-// Variabili globali
+        // Variabili globali
         let nomeGiocatore = "";
         let nomeAvversario = "";
         let squadraGiocatore = [];
@@ -976,6 +1138,9 @@ function translateType(type, lang) {
         let turno = 1;
         let idxGiocatore = 0;
         let idxAvversario = 0;
+        let playerTurn = true;
+        let effettiGiocatore = { attacco: 0, difesa: 0 };
+        let effettiAvversario = { attacco: 0, difesa: 0 };
 
         // Funzione per ottenere l'URL dello sprite di un Pokémon
         function getPokemonSpriteUrl(pokemonName) {
@@ -994,7 +1159,7 @@ function translateType(type, lang) {
 
         // Funzione per creare una nuova istanza di Pokémon (clone)
         function creaPokemon(p) {
-            return new Pokemon(p.Nome, p.Vita, p.AttaccoBase, p.Tipo);
+            return new Pokemon(p.Nome, p.Vita, p.AttaccoBase, p.DifesaBase, p.Velocita, p.Tipo);
         }
 
         // Inizializzazione
@@ -1036,7 +1201,7 @@ function translateType(type, lang) {
             document.getElementById('next-turn').addEventListener('click', nextTurn);
         });
 
-        // Funzione per selezionare un Pokémon
+        // Funzione per selezionare a Pokémon
         function selectPokemon(card, pokemon) {
             if (squadraGiocatore.length >= 3 && !card.classList.contains('selected')) {
                 alert(translations[lang].select3);
@@ -1103,11 +1268,16 @@ function translateType(type, lang) {
             idxGiocatore = 0;
             idxAvversario = 0;
             updateBattleField();
-            document.getElementById('battle-log').innerHTML = 
-                translations[lang].logStart(nomeGiocatore, nomeAvversario);
-            document.getElementById('next-turn').disabled = false;
-            document.getElementById('result-section').style.display = 'none';
-            document.getElementById('fullscreen-message').style.display = 'none';
+            updateMoveButtons();
+            
+            // MODIFICA: Il giocatore attacca sempre per primo
+            playerTurn = true;
+            
+            let log = translations[lang].logStart(nomeGiocatore, nomeAvversario);
+            log += `<div class="log-entry turn-player">${translations[lang].logFirstTurn(squadraGiocatore[idxGiocatore].Nome)}</div>`;
+            
+            document.getElementById('battle-log').innerHTML = log;
+            document.getElementById('next-turn').style.display = 'none';
         }
 
         // Funzione per aggiornare il display delle squadre
@@ -1118,8 +1288,8 @@ function translateType(type, lang) {
             playerTeam.innerHTML = '';
             opponentTeam.innerHTML = '';
             
-            document.getElementById('player-team-title').textContent = `Squadra di ${nomeGiocatore}`;
-            document.getElementById('opponent-team-title').textContent = `Squadra di ${nomeAvversario}`;
+            document.getElementById('player-team-title').textContent = `${translations[lang].playerTeam} - ${nomeGiocatore}`;
+            document.getElementById('opponent-team-title').textContent = `${translations[lang].opponentTeam} - ${nomeAvversario}`;
             
             squadraGiocatore.forEach(pokemon => {
                 const spriteUrl = getPokemonSpriteUrl(pokemon.Nome);
@@ -1236,13 +1406,36 @@ function translateType(type, lang) {
             }
         }
 
-        // Funzione per eseguire il prossimo turno
-        function nextTurn() {
-            if (idxGiocatore >= 3 || idxAvversario >= 3) {
-                endBattle();
-                return;
-            }
+        // Funzione per aggiornare i pulsanti delle mosse
+        function updateMoveButtons() {
+            const moveButtons = document.getElementById('move-buttons');
+            moveButtons.innerHTML = '';
             
+            if (idxGiocatore < 3 && playerTurn) {
+                const p = squadraGiocatore[idxGiocatore];
+                
+                // Aggiungi titolo
+                const title = document.createElement('div');
+                title.textContent = translations[lang].chooseMove;
+                title.style.fontWeight = 'bold';
+                title.style.marginBottom = '10px';
+                title.style.width = '100%';
+                title.style.textAlign = 'center';
+                moveButtons.appendChild(title);
+                
+                // Aggiungi pulsanti per ogni mossa
+                p.Mosse.forEach(mossa => {
+                    const button = document.createElement('button');
+                    button.className = 'move-button';
+                    button.textContent = translateMove(mossa, lang);
+                    button.addEventListener('click', () => executePlayerMove(mossa));
+                    moveButtons.appendChild(button);
+                });
+            }
+        }
+
+        // Funzione per eseguire la mossa del giocatore
+        function executePlayerMove(mossa) {
             const mio = squadraGiocatore[idxGiocatore];
             const suo = squadraAvversario[idxAvversario];
             
@@ -1250,7 +1443,8 @@ function translateType(type, lang) {
             log += `<div class="log-entry info">${translations[lang].logField(mio, suo)}</div>`;
             
             // Attacco del giocatore
-            log += `<div class="log-entry attack">${translations[lang].logAttack(mio, suo, mio.attacca(suo))}</div>`;
+            const risultato = mio.attacca(suo, mossa);
+            log += `<div class="log-entry attack">${translations[lang].logAttack(mio, suo, risultato.danno, translateMove(mossa, lang), risultato.efficacia)}</div>`;
             
             if (!suo.eVivo()) {
                 log += `<div class="log-entry switch">${translations[lang].logSwitch(suo.Nome)}</div>`;
@@ -1265,21 +1459,7 @@ function translateType(type, lang) {
                 
                 if (idxAvversario >= 3) {
                     endBattle();
-                }
-                
-                turno++;
-                return;
-            }
-            
-            // Attacco dell'avversario
-            log += `<div class="log-entry turn-opponent">${translations[lang].logTurn(turno)}</div>`;
-            log += `<div class="log-entry attack">${translations[lang].logAttack(suo, mio, suo.attacca(mio))}</div>`;
-            
-            if (!mio.eVivo()) {
-                log += `<div class="log-entry switch">${translations[lang].logSwitch(mio.Nome)}</div>`;
-                idxGiocatore++;
-                if (idxGiocatore < 3) {
-                    log += `<div class="log-entry switch">${translations[lang].logEnter(squadraGiocatore[idxGiocatore].Nome)}</div>`;
+                    return;
                 }
             }
             
@@ -1288,11 +1468,70 @@ function translateType(type, lang) {
             document.getElementById('battle-log').innerHTML += log;
             document.getElementById('battle-log').scrollTop = document.getElementById('battle-log').scrollHeight;
             
-            if (idxGiocatore >= 3 || idxAvversario >= 3) {
+            // Disabilita i pulsanti delle mosse
+            document.getElementById('move-buttons').innerHTML = '';
+            
+            if (idxAvversario >= 3) {
                 endBattle();
+            } else {
+                // Passa il turno all'avversario dopo un breve ritardo
+                setTimeout(() => {
+                    opponentTurn();
+                }, 1500);
+            }
+        }
+
+        // Funzione per il turno dell'avversario
+        function opponentTurn() {
+            const mio = squadraGiocatore[idxGiocatore];
+            const suo = squadraAvversario[idxAvversario];
+            
+            let log = `<div class="log-entry turn-opponent">${translations[lang].logTurn(turno)}</div>`;
+            log += `<div class="log-entry info">${translations[lang].logField(mio, suo)}</div>`;
+            
+            // L'avversario sceglie una mossa casuale
+            const mossa = suo.Mosse[Math.floor(Math.random() * suo.Mosse.length)];
+            
+            // Attacco dell'avversario
+            const risultato = suo.attacca(mio, mossa);
+            log += `<div class="log-entry attack">${translations[lang].logAttack(suo, mio, risultato.danno, translateMove(mossa, lang), risultato.efficacia)}</div>`;
+            
+            if (!mio.eVivo()) {
+                log += `<div class="log-entry switch">${translations[lang].logSwitch(mio.Nome)}</div>`;
+                idxGiocatore++;
+                if (idxGiocatore < 3) {
+                    log += `<div class="log-entry switch">${translations[lang].logEnter(squadraGiocatore[idxGiocatore].Nome)}</div>`;
+                }
+                
+                updateBattleField();
+                updateTeamDisplay();
+                document.getElementById('battle-log').innerHTML += log;
+                
+                if (idxGiocatore >= 3) {
+                    endBattle();
+                    return;
+                }
+            }
+            
+            updateBattleField();
+            updateTeamDisplay();
+            document.getElementById('battle-log').innerHTML += log;
+            document.getElementById('battle-log').scrollTop = document.getElementById('battle-log').scrollHeight;
+            
+            if (idxGiocatore >= 3) {
+                endBattle();
+            } else {
+                // Abilita di nuovo i pulsanti delle mosse per il giocatore
+                playerTurn = true;
+                updateMoveButtons();
             }
             
             turno++;
+        }
+
+        // Funzione per eseguire il prossimo turno (vecchia versione)
+        function nextTurn() {
+            // Questa funzione non viene più utilizzata con il nuovo sistema di mosse
         }
 
         // Funzione per terminare la battaglia
